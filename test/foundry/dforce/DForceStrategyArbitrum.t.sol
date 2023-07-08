@@ -10,9 +10,9 @@ import "../../../contracts/StorageV3.sol";
 import "../../../contracts/strategies/lbl/dforce/DForceStatistics.sol";
 import "../../../contracts/strategies/lbl/dforce/DForceStrategy.sol";
 import "../../../contracts/strategies/lbl/dforce/DForceLogic.sol";
-import "../../../contracts/interfaces/IXToken.sol";
-import "../../../contracts/interfaces/IStrategyStatistics.sol";
-import "../../../contracts/interfaces/IStorage.sol";
+import "../../../contracts/Interfaces/IXToken.sol";
+import "../../../contracts/Interfaces/IStrategyStatistics.sol";
+import "../../../contracts/Interfaces/IStorage.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20MetadataUpgradeable.sol";
 
 struct singleStrategy {
@@ -26,8 +26,7 @@ interface IMultiLogic {
         singleStrategy[] calldata _multiStrategy
     ) external;
 
-    function setPercentages(address _token, uint256[] calldata _percentages)
-        external;
+    function setPercentages(address _token, uint256[] calldata _percentages) external;
 }
 
 interface IStorageTest {
@@ -86,10 +85,7 @@ contract DForceStrategyArbitrumTest is Test {
     address rewardsToken = DF;
 
     function setUp() public {
-        mainnetFork = vm.createSelectFork(
-            "https://rpc.arb1.arbitrum.gateway.fm",
-            BLOCK_NUMBER
-        );
+        mainnetFork = vm.createSelectFork("https://rpc.arb1.arbitrum.gateway.fm", BLOCK_NUMBER);
         vm.startPrank(owner);
 
         // Storage
@@ -122,25 +118,16 @@ contract DForceStrategyArbitrumTest is Test {
         path[1] = USDT;
         statistics.setBLIDSwap(uniswapV3Router, path);
 
-        statistics.setPriceOracle(
-            USDT,
-            0x3f3f5dF88dC9F13eac63DF89EC16ef6e7E25DdE7
-        ); // USDT
+        statistics.setPriceOracle(USDT, 0x3f3f5dF88dC9F13eac63DF89EC16ef6e7E25DdE7); // USDT
 
-        statistics.setPriceOracle(
-            USX_USDC,
-            0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3
-        ); // USX_USDC
+        statistics.setPriceOracle(USX_USDC, 0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3); // USX_USDC
 
         statistics.setPriceOracle(
             0x0000000000000000000000000000000000000000,
             0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612
         ); // ETH
 
-        statistics.setPriceOracle(
-            USDC,
-            0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3
-        ); // USDC
+        statistics.setPriceOracle(USDC, 0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3); // USDC
 
         // strategyLogic
         strategyLogic = new DForceLogic();
@@ -166,13 +153,11 @@ contract DForceStrategyArbitrumTest is Test {
         strategy.setCirclesCount(_circlesCount);
         strategy.setAvoidLiquidationFactor(5);
 
-        strategy.setMinStorageAvailable(3 * 10**18);
+        strategy.setMinStorageAvailable(3 * 10 ** 18);
         strategy.setRebalanceParameter(_borrowRateMin, _borrowRateMax);
         strategy.setMinBLIDPerRewardsToken(0);
         strategyLogic.setAdmin(address(strategy));
-        strategy.setRewardsTokenPriceDeviationLimit(
-            (1 ether) / uint256(100 * 86400)
-        ); // 1% / 1day
+        strategy.setRewardsTokenPriceDeviationLimit((1 ether) / uint256(100 * 86400)); // 1% / 1day
 
         // MultiLogicProxy Init
         MultiLogic.singleStrategy memory strategyInfoDForce;
@@ -181,8 +166,7 @@ contract DForceStrategyArbitrumTest is Test {
 
         string[] memory _strategyName = new string[](1);
         _strategyName[0] = "DForce";
-        MultiLogic.singleStrategy[]
-            memory _multiStrategy = new MultiLogic.singleStrategy[](1);
+        MultiLogic.singleStrategy[] memory _multiStrategy = new MultiLogic.singleStrategy[](1);
         _multiStrategy[0] = strategyInfoDForce;
 
         multiLogic.initStrategies(_strategyName, _multiStrategy);
@@ -194,31 +178,18 @@ contract DForceStrategyArbitrumTest is Test {
         // Storage init
         IStorageTest(_storage).setBLID(blid);
         IStorageTest(_storage).setMultiLogicProxy(address(multiLogic));
-        IStorageTest(_storage).addToken(
-            ZERO_ADDRESS,
-            0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612
-        );
-        IStorageTest(_storage).addToken(
-            USDT,
-            0x3f3f5dF88dC9F13eac63DF89EC16ef6e7E25DdE7
-        );
+        IStorageTest(_storage).addToken(ZERO_ADDRESS, 0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612);
+        IStorageTest(_storage).addToken(USDT, 0x3f3f5dF88dC9F13eac63DF89EC16ef6e7E25DdE7);
         IStorageTest(_storage).setOracleDeviationLimit(1 ether);
 
         // Deal and swap USDT
-        vm.deal(owner, 10**21);
+        vm.deal(owner, 10 ** 21);
 
         path = new address[](2);
         path[0] = ZERO_ADDRESS;
         path[1] = USDT;
 
-        swapGateway.swap{value: 10**18}(
-            uniswapV3Router,
-            10**18,
-            0,
-            path,
-            true,
-            block.timestamp + 3600
-        );
+        swapGateway.swap{ value: 10 ** 18 }(uniswapV3Router, 10 ** 18, 0, path, true, block.timestamp + 3600);
         vm.stopPrank();
     }
 
@@ -275,7 +246,7 @@ contract DForceStrategyArbitrumTest is Test {
         swapInfo.paths[0][1] = USDT;
         strategy.setSwapInfo(swapInfo, 3);
 
-        _testStrategy(iUSDT, USDT, iUSDT, USDT, 2 * 10**6);
+        _testStrategy(iUSDT, USDT, iUSDT, USDT, 2 * 10 ** 6);
 
         vm.stopPrank();
     }
@@ -299,24 +270,15 @@ contract DForceStrategyArbitrumTest is Test {
         // Deposit to storage
         if (supplyToken == ZERO_ADDRESS) {
             vm.deal(owner, depositAmount);
-            IStorageTest(_storage).deposit{value: depositAmount}(
-                depositAmount,
-                supplyToken
-            );
+            IStorageTest(_storage).deposit{ value: depositAmount }(depositAmount, supplyToken);
         } else {
-            IERC20MetadataUpgradeable(supplyToken).approve(
-                _storage,
-                depositAmount * 100
-            );
+            IERC20MetadataUpgradeable(supplyToken).approve(_storage, depositAmount * 100);
             IStorageTest(_storage).deposit(depositAmount, supplyToken);
         }
 
         console.log(
             "Available in Storage : ",
-            IMultiLogicProxy(multiLogicProxy).getTokenAvailable(
-                supplyToken,
-                logic
-            )
+            IMultiLogicProxy(multiLogicProxy).getTokenAvailable(supplyToken, logic)
         );
 
         // Test useToken
@@ -333,10 +295,7 @@ contract DForceStrategyArbitrumTest is Test {
         strategy.useToken();
         console.log(
             "Available in Storage : ",
-            IMultiLogicProxy(multiLogicProxy).getTokenAvailable(
-                supplyToken,
-                logic
-            )
+            IMultiLogicProxy(multiLogicProxy).getTokenAvailable(supplyToken, logic)
         );
         tokenInfo = statistics.getStrategyXTokenInfo(supplyXToken, logic);
         assertEq(tokenInfo.totalSupply > 0, true);
@@ -362,16 +321,12 @@ contract DForceStrategyArbitrumTest is Test {
             console.log("BLID of storage   : ", blidStorage);
 
             console.log("-- After Claim with small DF amount --");
-            strategy.setMinRewardsSwapLimit(10**20);
+            strategy.setMinRewardsSwapLimit(10 ** 20);
             strategy.claimRewards();
 
             blidExpenseNew = IERC20MetadataUpgradeable(blid).balanceOf(expense);
-            blidStorageNew = IERC20MetadataUpgradeable(blid).balanceOf(
-                _storage
-            );
-            Rewards_balance = IERC20MetadataUpgradeable(rewardsToken).balanceOf(
-                    logic
-                );
+            blidStorageNew = IERC20MetadataUpgradeable(blid).balanceOf(_storage);
+            Rewards_balance = IERC20MetadataUpgradeable(rewardsToken).balanceOf(logic);
 
             console.log("BLID of expense   : ", blidExpenseNew);
             console.log("BLID of storage   : ", blidStorageNew);
@@ -390,12 +345,8 @@ contract DForceStrategyArbitrumTest is Test {
             strategy.claimRewards();
 
             blidExpenseNew = IERC20MetadataUpgradeable(blid).balanceOf(expense);
-            blidStorageNew = IERC20MetadataUpgradeable(blid).balanceOf(
-                _storage
-            );
-            Rewards_balance = IERC20MetadataUpgradeable(rewardsToken).balanceOf(
-                    logic
-                );
+            blidStorageNew = IERC20MetadataUpgradeable(blid).balanceOf(_storage);
+            Rewards_balance = IERC20MetadataUpgradeable(rewardsToken).balanceOf(logic);
 
             console.log("BLID of expense   : ", blidExpenseNew);
             console.log("BLID of storage   : ", blidStorageNew);
@@ -407,29 +358,23 @@ contract DForceStrategyArbitrumTest is Test {
 
             console.log("-- Rewards Price Kill Switch Active --");
             strategy.setRewardsTokenPrice(
-                (statistics.getRewardsTokenPrice(comptroller, rewardsToken) *
-                    8638) / 8640
+                (statistics.getRewardsTokenPrice(comptroller, rewardsToken) * 8638) / 8640
             );
             vm.warp(block.timestamp + 2000);
             vm.roll(block.number + 99999);
             strategy.claimRewards();
-            Rewards_balance = IERC20MetadataUpgradeable(rewardsToken).balanceOf(
-                    logic
-                );
+            Rewards_balance = IERC20MetadataUpgradeable(rewardsToken).balanceOf(logic);
             console.log("Rewards of Logic  : ", Rewards_balance);
             assertEq(Rewards_balance > 0, true);
 
             console.log("-- Rewards Price Kill Switch Deactive --");
             strategy.setRewardsTokenPrice(
-                (statistics.getRewardsTokenPrice(comptroller, rewardsToken) *
-                    8639) / 8640
+                (statistics.getRewardsTokenPrice(comptroller, rewardsToken) * 8639) / 8640
             );
             vm.warp(block.timestamp + 2000);
             vm.roll(block.number + 99999);
             strategy.claimRewards();
-            Rewards_balance = IERC20MetadataUpgradeable(rewardsToken).balanceOf(
-                    logic
-                );
+            Rewards_balance = IERC20MetadataUpgradeable(rewardsToken).balanceOf(logic);
             console.log("Rewards of Logic  : ", Rewards_balance);
             assertEq(Rewards_balance, 0);
             tokenInfo = _showXTokenInfo();
@@ -443,21 +388,13 @@ contract DForceStrategyArbitrumTest is Test {
                     true
                 );
             } else {
-                supplyTokenInfo = statistics.getStrategyXTokenInfo(
-                    supplyXToken,
-                    logic
-                );
+                supplyTokenInfo = statistics.getStrategyXTokenInfo(supplyXToken, logic);
                 assertEq(
                     int256(supplyTokenInfo.lendingAmountUSD) -
                         int256(supplyTokenInfo.totalSupplyUSD) -
                         int256(tokenInfo.totalSupplyUSD) +
                         int256(tokenInfo.borrowAmountUSD) <=
-                        int256(
-                            10 **
-                                (18 -
-                                    IERC20MetadataUpgradeable(strategyToken)
-                                        .decimals())
-                        ),
+                        int256(10 ** (18 - IERC20MetadataUpgradeable(strategyToken).decimals())),
                     true
                 );
             }
@@ -498,16 +435,11 @@ contract DForceStrategyArbitrumTest is Test {
 
         blidExpenseNew = IERC20MetadataUpgradeable(blid).balanceOf(expense);
         blidStorageNew = IERC20MetadataUpgradeable(blid).balanceOf(_storage);
-        Rewards_balance = IERC20MetadataUpgradeable(rewardsToken).balanceOf(
-            logic
-        );
+        Rewards_balance = IERC20MetadataUpgradeable(rewardsToken).balanceOf(logic);
 
         console.log(
             "Available in Storage : ",
-            IMultiLogicProxy(multiLogicProxy).getTokenAvailable(
-                supplyToken,
-                logic
-            )
+            IMultiLogicProxy(multiLogicProxy).getTokenAvailable(supplyToken, logic)
         );
         tokenInfo = _showXTokenInfo();
         assertEq(strategy.checkRebalance(), false);
@@ -530,10 +462,7 @@ contract DForceStrategyArbitrumTest is Test {
                     0
                 );
             } else {
-                supplyTokenInfo = statistics.getStrategyXTokenInfo(
-                    supplyXToken,
-                    logic
-                );
+                supplyTokenInfo = statistics.getStrategyXTokenInfo(supplyXToken, logic);
                 assertEq(
                     int256(supplyTokenInfo.lendingAmountUSD) -
                         int256(supplyTokenInfo.totalSupplyUSD) -
@@ -555,10 +484,7 @@ contract DForceStrategyArbitrumTest is Test {
         if (strategyToken != ZERO_ADDRESS) {
             console.log("============= Deposit/Withdraw All =============");
             if (supplyToken == ZERO_ADDRESS) {
-                IStorageTest(_storage).deposit{value: depositAmount}(
-                    depositAmount,
-                    supplyToken
-                );
+                IStorageTest(_storage).deposit{ value: depositAmount }(depositAmount, supplyToken);
             } else {
                 IStorageTest(_storage).deposit(depositAmount, supplyToken);
             }
@@ -577,19 +503,12 @@ contract DForceStrategyArbitrumTest is Test {
         }
     }
 
-    function _showXTokenInfo()
-        private
-        view
-        returns (XTokenInfo memory xTokenInfo)
-    {
+    function _showXTokenInfo() private view returns (XTokenInfo memory xTokenInfo) {
         address supplyXToken = strategy.supplyXToken();
         address strategyXToken = strategy.strategyXToken();
 
         xTokenInfo = statistics.getStrategyXTokenInfo(strategyXToken, logic);
-        XTokenInfo memory supplyXTokenInfo = statistics.getStrategyXTokenInfo(
-            supplyXToken,
-            logic
-        );
+        XTokenInfo memory supplyXTokenInfo = statistics.getStrategyXTokenInfo(supplyXToken, logic);
 
         console.log("lendingAmount     : ", supplyXTokenInfo.lendingAmount);
         if (supplyXToken != strategyXToken) {
@@ -618,20 +537,11 @@ contract DForceStrategyArbitrumTest is Test {
         console.log("underlyingBalance : ", xTokenInfo.underlyingBalance);
         if (supplyXToken != strategyXToken) {
             console.log("--- USD ---");
-            console.log(
-                "lendingAmount     : ",
-                supplyXTokenInfo.lendingAmountUSD
-            );
-            console.log(
-                "supplyAmount      : ",
-                supplyXTokenInfo.totalSupplyUSD
-            );
+            console.log("lendingAmount     : ", supplyXTokenInfo.lendingAmountUSD);
+            console.log("supplyAmount      : ", supplyXTokenInfo.totalSupplyUSD);
             console.log("totalSupply       : ", xTokenInfo.totalSupplyUSD);
             console.log("borrowAmount      : ", xTokenInfo.borrowAmountUSD);
-            console.log(
-                "borrowLimit       : ",
-                supplyXTokenInfo.borrowLimitUSD + xTokenInfo.borrowLimitUSD
-            );
+            console.log("borrowLimit       : ", supplyXTokenInfo.borrowLimitUSD + xTokenInfo.borrowLimitUSD);
         }
 
         uint256 borrowRate = 0;
@@ -640,13 +550,10 @@ contract DForceStrategyArbitrumTest is Test {
                 ? 0
                 : ((xTokenInfo.borrowAmount * 100) / xTokenInfo.borrowLimit);
         } else {
-            borrowRate = (xTokenInfo.borrowLimitUSD +
-                supplyXTokenInfo.borrowLimitUSD ==
-                0)
+            borrowRate = (xTokenInfo.borrowLimitUSD + supplyXTokenInfo.borrowLimitUSD == 0)
                 ? 0
                 : (xTokenInfo.borrowAmountUSD * 100) /
-                    (xTokenInfo.borrowLimitUSD +
-                        supplyXTokenInfo.borrowLimitUSD);
+                    (xTokenInfo.borrowLimitUSD + supplyXTokenInfo.borrowLimitUSD);
         }
         console.log("borrow Rate       : ", borrowRate);
     }

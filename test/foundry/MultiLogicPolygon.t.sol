@@ -8,9 +8,9 @@ import "../../contracts/MultiLogic.sol";
 import "../../contracts/strategies/lbl/dforce/DForceStatistics.sol";
 import "../../contracts/strategies/lbl/dforce/DForceStrategy.sol";
 import "../../contracts/strategies/lbl/dforce/DForceLogic.sol";
-import "../../contracts/interfaces/IXToken.sol";
-import "../../contracts/interfaces/IStrategyStatistics.sol";
-import "../../contracts/interfaces/IStorage.sol";
+import "../../contracts/Interfaces/IXToken.sol";
+import "../../contracts/Interfaces/IStrategyStatistics.sol";
+import "../../contracts/Interfaces/IStorage.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20MetadataUpgradeable.sol";
 
 struct singleStrategy {
@@ -73,10 +73,7 @@ contract MultiLogicPolygonTest is Test {
     address rewardsToken = DF;
 
     function setUp() public {
-        mainnetFork = vm.createSelectFork(
-            "https://polygon-rpc.com",
-            BLOCK_NUMBER
-        );
+        mainnetFork = vm.createSelectFork("https://polygon-rpc.com", BLOCK_NUMBER);
         vm.startPrank(owner);
 
         // MultiLogic
@@ -180,9 +177,7 @@ contract MultiLogicPolygonTest is Test {
         strategy1.setRebalanceParameter(_borrowRateMin, _borrowRateMax);
         strategy1.setMinBLIDPerRewardsToken(0);
         strategyLogic1.setAdmin(address(strategy1));
-        strategy1.setRewardsTokenPriceDeviationLimit(
-            (1 ether) / uint256(100 * 86400)
-        ); // 1% / 1day
+        strategy1.setRewardsTokenPriceDeviationLimit((1 ether) / uint256(100 * 86400)); // 1% / 1day
         strategy1.setMinStorageAvailable(10000);
         strategy1.setMinRewardsSwapLimit(1000000);
 
@@ -198,9 +193,7 @@ contract MultiLogicPolygonTest is Test {
         strategy2.setRebalanceParameter(_borrowRateMin, _borrowRateMax);
         strategy2.setMinBLIDPerRewardsToken(0);
         strategyLogic2.setAdmin(address(strategy2));
-        strategy2.setRewardsTokenPriceDeviationLimit(
-            (1 ether) / uint256(100 * 86400)
-        ); // 1% / 1day
+        strategy2.setRewardsTokenPriceDeviationLimit((1 ether) / uint256(100 * 86400)); // 1% / 1day
         strategy2.setMinStorageAvailable(10000);
         strategy2.setMinRewardsSwapLimit(1000000);
 
@@ -216,8 +209,7 @@ contract MultiLogicPolygonTest is Test {
         string[] memory _strategyName = new string[](2);
         _strategyName[0] = "USDT_USDT";
         _strategyName[1] = "USDT_USDC";
-        MultiLogic.singleStrategy[]
-            memory _multiStrategy = new MultiLogic.singleStrategy[](2);
+        MultiLogic.singleStrategy[] memory _multiStrategy = new MultiLogic.singleStrategy[](2);
         _multiStrategy[0] = strategyInfo1;
         _multiStrategy[1] = strategyInfo2;
 
