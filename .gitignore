@@ -8,3 +8,5 @@ artifacts
 cache
 typechain-types
 .vscode
+out
+forge-cache
