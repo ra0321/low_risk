@@ -7,3 +7,4 @@ data.json
 artifacts
 cache
 typechain-types
+.vscode
