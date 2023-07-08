@@ -4,15 +4,10 @@ pragma solidity ^0.8.13;
 pragma abicoder v2;
 
 import "../../../LendingLogic.sol";
-import "../../../interfaces/ICompound.sol";
+import "../../../Interfaces/ICompound.sol";
 
 contract OlaLogic is LendingLogic {
-    function _checkMarkets(address xToken)
-        internal
-        view
-        override
-        returns (bool isUsedXToken)
-    {
+    function _checkMarkets(address xToken) internal view override returns (bool isUsedXToken) {
         (isUsedXToken, , , , , ) = IComptrollerOla(comptroller).markets(xToken);
     }
 

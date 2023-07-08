@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.13;
+pragma solidity ^0.8.13;
 pragma abicoder v2;
 
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import "../utils/UpgradeableBase.sol";
-import "../interfaces/IStargateRouter.sol";
+import "../Interfaces/IStargateRouter.sol";
 
 contract CrossChainDepositor is UpgradeableBase {
     using SafeERC20Upgradeable for IERC20Upgradeable;
@@ -56,10 +56,7 @@ contract CrossChainDepositor is UpgradeableBase {
      * @notice Set AccumulatedDepositor address on destination chain
      * @param _accumulatedDepositor Address AccumulatedDepositor on destination chain
      */
-    function setAccumulatedDepositor(address _accumulatedDepositor)
-        external
-        onlyOwner
-    {
+    function setAccumulatedDepositor(address _accumulatedDepositor) external onlyOwner {
         accumulatedDepositor = _accumulatedDepositor;
 
         emit SetAccumulatedDepositor(_accumulatedDepositor);
@@ -77,10 +74,7 @@ contract CrossChainDepositor is UpgradeableBase {
      * @notice Set stargateDstGasForCall value that gas amount for destination chain
      * @param _stargateDstGasForCall Amount of DstGasForCall
      */
-    function setStargateDstGasForCall(uint256 _stargateDstGasForCall)
-        external
-        onlyOwner
-    {
+    function setStargateDstGasForCall(uint256 _stargateDstGasForCall) external onlyOwner {
         stargateDstGasForCall = _stargateDstGasForCall;
 
         emit SetStargateDstGasForCall(_stargateDstGasForCall);
@@ -105,11 +99,10 @@ contract CrossChainDepositor is UpgradeableBase {
      * @param chainId Destination chainId
      * @param dstGasForCall Destination required gas for call
      */
-    function getDepositFeeStargate(uint16 chainId, uint256 dstGasForCall)
-        public
-        view
-        returns (uint256 feeWei)
-    {
+    function getDepositFeeStargate(
+        uint16 chainId,
+        uint256 dstGasForCall
+    ) public view returns (uint256 feeWei) {
         require(accumulatedDepositor != address(0), "CD4");
 
         bytes memory data = abi.encode(msg.sender);
@@ -119,11 +112,7 @@ contract CrossChainDepositor is UpgradeableBase {
             1, // swap remote
             abi.encodePacked(accumulatedDepositor),
             data,
-            IStargateRouter.lzTxObj(
-                dstGasForCall,
-                0,
-                abi.encodePacked(accumulatedDepositor)
-            )
+            IStargateRouter.lzTxObj(dstGasForCall, 0, abi.encodePacked(accumulatedDepositor))
         );
     }
 
@@ -143,41 +132,26 @@ contract CrossChainDepositor is UpgradeableBase {
         uint256 amountIn,
         uint256 amountOutMin,
         uint256 dstGasForCall
-    )
-        external
-        payable
-        isUsedStargateToken(srcToken)
-        isUsedStargateToken(dstToken)
-    {
+    ) external payable isUsedStargateToken(srcToken) isUsedStargateToken(dstToken) {
         address _accumulatedDepositor = accumulatedDepositor;
 
         require(msg.value > 0, "CD5");
         require(_accumulatedDepositor != address(0), "CD4");
         require(amountIn > 0, "CD6");
-        require(
-            stargateDstGasForCall > 0 && stargateDstGasForCall <= dstGasForCall,
-            "CD8"
-        );
+        require(stargateDstGasForCall > 0 && stargateDstGasForCall <= dstGasForCall, "CD8");
 
         // Estimate gas fee
         uint256 feeWei = getDepositFeeStargate(chainId, dstGasForCall);
         require(msg.value >= feeWei, "CD7");
 
         // Take token from user wallet
-        IERC20Upgradeable(srcToken).safeTransferFrom(
-            msg.sender,
-            address(this),
-            amountIn
-        );
+        IERC20Upgradeable(srcToken).safeTransferFrom(msg.sender, address(this), amountIn);
 
         // Approve token for swap
-        IERC20Upgradeable(srcToken).safeApprove(
-            address(stargateRouter),
-            amountIn
-        );
+        IERC20Upgradeable(srcToken).safeApprove(address(stargateRouter), amountIn);
 
         // Swap via Stargate
-        IStargateRouter(stargateRouter).swap{value: msg.value}(
+        IStargateRouter(stargateRouter).swap{ value: msg.value }(
             chainId,
             stargateTokenPoolId[srcToken],
             stargateTokenPoolId[dstToken],

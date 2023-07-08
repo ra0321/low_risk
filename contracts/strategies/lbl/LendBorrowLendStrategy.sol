@@ -7,11 +7,11 @@ import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeab
 import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20MetadataUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/math/SafeCastUpgradeable.sol";
 import "./../../utils/UpgradeableBase.sol";
-import "./../../interfaces/IXToken.sol";
-import "./../../interfaces/IMultiLogicProxy.sol";
-import "./../../interfaces/ILogicContract.sol";
-import "./../../interfaces/IStrategyStatistics.sol";
-import "./../../interfaces/IStrategyContract.sol";
+import "./../../Interfaces/IXToken.sol";
+import "./../../Interfaces/IMultiLogicProxy.sol";
+import "./../../Interfaces/ILogicContract.sol";
+import "./../../Interfaces/IStrategyStatistics.sol";
+import "./../../Interfaces/IStrategyContract.sol";
 import "./LendBorrowLendStrategyHelper.sol";
 
 abstract contract LendBorrowLendStrategy is UpgradeableBase, IStrategy {
@@ -20,7 +20,7 @@ abstract contract LendBorrowLendStrategy is UpgradeableBase, IStrategy {
 
     address internal constant ZERO_ADDRESS = address(0);
     uint256 internal constant DECIMALS = 18;
-    uint256 internal constant BASE = 10**DECIMALS;
+    uint256 internal constant BASE = 10 ** DECIMALS;
 
     address public logic;
     address public blid;
@@ -68,20 +68,13 @@ abstract contract LendBorrowLendStrategy is UpgradeableBase, IStrategy {
     event SetRewardsTokenPriceDeviationLimit(uint256 deviationLimit);
     event SetRewardsTokenPriceInfo(uint256 latestAnser, uint256 timestamp);
     event BuildCircle(address token, uint256 amount, uint256 circlesCount);
-    event DestroyCircle(
-        address token,
-        uint256 circlesCount,
-        uint256 destroyAmountLimit
-    );
+    event DestroyCircle(address token, uint256 circlesCount, uint256 destroyAmountLimit);
     event DestroyAll(address token, uint256 destroyAmount, uint256 blidAmount);
     event ClaimRewards(uint256 amount);
     event UseToken(address token, uint256 amount);
     event ReleaseToken(address token, uint256 amount);
 
-    function __Strategy_init(address _comptroller, address _logic)
-        public
-        initializer
-    {
+    function __Strategy_init(address _comptroller, address _logic) public initializer {
         UpgradeableBase.initialize();
         comptroller = _comptroller;
         rewardsToken = _getRewardsToken(_comptroller);
@@ -128,17 +121,13 @@ abstract contract LendBorrowLendStrategy is UpgradeableBase, IStrategy {
      * @notice Set StrategyStatistics
      * @param _strategyStatistics Address of StrategyStatistics
      */
-    function setStrategyStatistics(address _strategyStatistics)
-        external
-        onlyOwner
-    {
+    function setStrategyStatistics(address _strategyStatistics) external onlyOwner {
         if (_strategyStatistics != ZERO_ADDRESS) {
             strategyStatistics = _strategyStatistics;
 
             // Save RewardsTokenPriceInfo
-            rewardsTokenPriceInfo.latestAnswer = IStrategyStatistics(
-                _strategyStatistics
-            ).getRewardsTokenPrice(comptroller, rewardsToken);
+            rewardsTokenPriceInfo.latestAnswer = IStrategyStatistics(_strategyStatistics)
+                .getRewardsTokenPrice(comptroller, rewardsToken);
             rewardsTokenPriceInfo.timestamp = block.timestamp;
         }
     }
@@ -157,10 +146,7 @@ abstract contract LendBorrowLendStrategy is UpgradeableBase, IStrategy {
      * @notice Set min Rewards swap limit
      * @param _minRewardsSwapLimit minimum swap amount for rewards token
      */
-    function setMinRewardsSwapLimit(uint256 _minRewardsSwapLimit)
-        external
-        onlyOwner
-    {
+    function setMinRewardsSwapLimit(uint256 _minRewardsSwapLimit) external onlyOwner {
         minRewardsSwapLimit = _minRewardsSwapLimit;
 
         emit SetMinRewardsSwapLimit(_minRewardsSwapLimit);
@@ -170,10 +156,7 @@ abstract contract LendBorrowLendStrategy is UpgradeableBase, IStrategy {
      * @notice Set minimumBLIDPerRewardToken
      * @param _minimumBLIDPerRewardToken minimum BLID for RewardsToken
      */
-    function setMinBLIDPerRewardsToken(uint256 _minimumBLIDPerRewardToken)
-        external
-        onlyOwner
-    {
+    function setMinBLIDPerRewardsToken(uint256 _minimumBLIDPerRewardToken) external onlyOwner {
         minimumBLIDPerRewardToken = _minimumBLIDPerRewardToken;
     }
 
@@ -187,10 +170,7 @@ abstract contract LendBorrowLendStrategy is UpgradeableBase, IStrategy {
      * 3 : swapStrategyTokenToSupplyTokenInfo
      * 4 : swapSupplyTokenToBLIDInfo
      */
-    function setSwapInfo(SwapInfo memory swapInfo, uint8 swapPurpose)
-        external
-        onlyOwner
-    {
+    function setSwapInfo(SwapInfo memory swapInfo, uint8 swapPurpose) external onlyOwner {
         LendBorrowLendStrategyHelper.checkSwapInfo(
             swapInfo,
             swapPurpose,
@@ -210,8 +190,7 @@ abstract contract LendBorrowLendStrategy is UpgradeableBase, IStrategy {
             swapStrategyTokenToBLIDInfo.swapRouters = swapInfo.swapRouters;
             swapStrategyTokenToBLIDInfo.paths = swapInfo.paths;
         } else if (swapPurpose == 3) {
-            swapStrategyTokenToSupplyTokenInfo.swapRouters = swapInfo
-                .swapRouters;
+            swapStrategyTokenToSupplyTokenInfo.swapRouters = swapInfo.swapRouters;
             swapStrategyTokenToSupplyTokenInfo.paths = swapInfo.paths;
         } else {
             swapSupplyTokenToBLIDInfo.swapRouters = swapInfo.swapRouters;
@@ -223,10 +202,7 @@ abstract contract LendBorrowLendStrategy is UpgradeableBase, IStrategy {
      * @notice Set avoidLiquidationFactor
      * @param _avoidLiquidationFactor factor value (0-99)
      */
-    function setAvoidLiquidationFactor(uint8 _avoidLiquidationFactor)
-        external
-        onlyOwner
-    {
+    function setAvoidLiquidationFactor(uint8 _avoidLiquidationFactor) external onlyOwner {
         require(_avoidLiquidationFactor < 100, "C4");
 
         avoidLiquidationFactor = _avoidLiquidationFactor;
@@ -248,10 +224,7 @@ abstract contract LendBorrowLendStrategy is UpgradeableBase, IStrategy {
      * @param _borrowRateMin borrowRate min : decimals = 18
      * @param _borrowRateMax borrowRate max : deciamls = 18
      */
-    function setRebalanceParameter(
-        uint256 _borrowRateMin,
-        uint256 _borrowRateMax
-    ) external onlyOwner {
+    function setRebalanceParameter(uint256 _borrowRateMin, uint256 _borrowRateMax) external onlyOwner {
         require(_borrowRateMin < BASE && _borrowRateMax < BASE, "C4");
 
         borrowRateMin = _borrowRateMin;
@@ -264,14 +237,10 @@ abstract contract LendBorrowLendStrategy is UpgradeableBase, IStrategy {
      * @notice Set RewardsTokenPriceDeviationLimit
      * @param _rewardsTokenPriceDeviationLimit price Diviation per seccond limit
      */
-    function setRewardsTokenPriceDeviationLimit(
-        uint256 _rewardsTokenPriceDeviationLimit
-    ) external onlyOwner {
+    function setRewardsTokenPriceDeviationLimit(uint256 _rewardsTokenPriceDeviationLimit) external onlyOwner {
         rewardsTokenPriceDeviationLimit = _rewardsTokenPriceDeviationLimit;
 
-        emit SetRewardsTokenPriceDeviationLimit(
-            _rewardsTokenPriceDeviationLimit
-        );
+        emit SetRewardsTokenPriceDeviationLimit(_rewardsTokenPriceDeviationLimit);
     }
 
     /**
@@ -292,12 +261,7 @@ abstract contract LendBorrowLendStrategy is UpgradeableBase, IStrategy {
      * @return canUseToken true : useToken is possible
      */
     function checkUseToken() public view override returns (bool canUseToken) {
-        if (
-            IMultiLogicProxy(multiLogicProxy).getTokenAvailable(
-                supplyToken,
-                logic
-            ) < minStorageAvailable
-        ) {
+        if (IMultiLogicProxy(multiLogicProxy).getTokenAvailable(supplyToken, logic) < minStorageAvailable) {
             canUseToken = false;
         } else {
             canUseToken = true;
@@ -310,13 +274,12 @@ abstract contract LendBorrowLendStrategy is UpgradeableBase, IStrategy {
      */
     function checkRebalance() public view override returns (bool canRebalance) {
         // Get lending status, borrowRate
-        (bool isLending, uint256 borrowRate) = LendBorrowLendStrategyHelper
-            .getBorrowRate(
-                strategyStatistics,
-                logic,
-                supplyXToken,
-                strategyXToken
-            );
+        (bool isLending, uint256 borrowRate) = LendBorrowLendStrategyHelper.getBorrowRate(
+            strategyStatistics,
+            logic,
+            supplyXToken,
+            strategyXToken
+        );
 
         // If no lending, can't rebalance
         if (!isLending) return false;
@@ -335,11 +298,7 @@ abstract contract LendBorrowLendStrategy is UpgradeableBase, IStrategy {
      * entermarkets to lending system
      * @param _xToken Address of XToken
      */
-    function setStrategyXToken(address _xToken)
-        external
-        onlyOwner
-        onlyStrategyPaused
-    {
+    function setStrategyXToken(address _xToken) external onlyOwner onlyStrategyPaused {
         if (_xToken != ZERO_ADDRESS && strategyXToken != _xToken) {
             strategyXToken = _xToken;
             strategyToken = _registerToken(_xToken, logic);
@@ -354,11 +313,7 @@ abstract contract LendBorrowLendStrategy is UpgradeableBase, IStrategy {
      * entermarkets to lending system
      * @param _xToken Address of XToken
      */
-    function setSupplyXToken(address _xToken)
-        external
-        onlyOwner
-        onlyStrategyPaused
-    {
+    function setSupplyXToken(address _xToken) external onlyOwner onlyStrategyPaused {
         if (_xToken != ZERO_ADDRESS && supplyXToken != _xToken) {
             supplyXToken = _xToken;
             supplyToken = _registerToken(_xToken, logic);
@@ -375,8 +330,7 @@ abstract contract LendBorrowLendStrategy is UpgradeableBase, IStrategy {
         address _supplyToken = supplyToken;
 
         // Check if storageAvailable is bigger enough
-        uint256 availableAmount = IMultiLogicProxy(multiLogicProxy)
-            .getTokenAvailable(_supplyToken, _logic);
+        uint256 availableAmount = IMultiLogicProxy(multiLogicProxy).getTokenAvailable(_supplyToken, _logic);
         if (availableAmount < minStorageAvailable) return;
 
         // Take token from storage
@@ -395,19 +349,19 @@ abstract contract LendBorrowLendStrategy is UpgradeableBase, IStrategy {
         uint8 _circlesCount = circlesCount;
 
         // Get CollateralFactor
-        (
-            uint256 collateralFactorStrategy,
-            uint256 collateralFactorStrategyApplied
-        ) = _getCollateralFactor(_strategyXToken);
+        (uint256 collateralFactorStrategy, uint256 collateralFactorStrategyApplied) = _getCollateralFactor(
+            _strategyXToken
+        );
 
         // Get XToken information
         uint256 supplyBorrowLimitUSD;
         uint256 strategyPriceUSD;
 
         if (_supplyXToken != _strategyXToken) {
-            XTokenInfo memory tokenInfo = IStrategyStatistics(
-                strategyStatistics
-            ).getStrategyXTokenInfo(_supplyXToken, _logic);
+            XTokenInfo memory tokenInfo = IStrategyStatistics(strategyStatistics).getStrategyXTokenInfo(
+                _supplyXToken,
+                _logic
+            );
 
             supplyBorrowLimitUSD = tokenInfo.borrowLimitUSD;
         }
@@ -416,21 +370,20 @@ abstract contract LendBorrowLendStrategy is UpgradeableBase, IStrategy {
         ILendingLogic(_logic).mint(_strategyXToken, 0);
 
         int256 amount;
-        (amount, strategyPriceUSD) = LendBorrowLendStrategyHelper
-            .getRebalanceAmount(
-                RebalanceParam({
-                    strategyStatistics: strategyStatistics,
-                    logic: _logic,
-                    supplyXToken: _supplyXToken,
-                    strategyXToken: _strategyXToken,
-                    borrowRateMin: borrowRateMin,
-                    borrowRateMax: borrowRateMax,
-                    circlesCount: _circlesCount,
-                    supplyBorrowLimitUSD: supplyBorrowLimitUSD,
-                    collateralFactorStrategy: collateralFactorStrategy,
-                    collateralFactorStrategyApplied: collateralFactorStrategyApplied
-                })
-            );
+        (amount, strategyPriceUSD) = LendBorrowLendStrategyHelper.getRebalanceAmount(
+            RebalanceParam({
+                strategyStatistics: strategyStatistics,
+                logic: _logic,
+                supplyXToken: _supplyXToken,
+                strategyXToken: _strategyXToken,
+                borrowRateMin: borrowRateMin,
+                borrowRateMax: borrowRateMax,
+                circlesCount: _circlesCount,
+                supplyBorrowLimitUSD: supplyBorrowLimitUSD,
+                collateralFactorStrategy: collateralFactorStrategy,
+                collateralFactorStrategyApplied: collateralFactorStrategyApplied
+            })
+        );
 
         // Build
         if (amount > 0) {
@@ -449,11 +402,7 @@ abstract contract LendBorrowLendStrategy is UpgradeableBase, IStrategy {
                 strategyPriceUSD,
                 uint256(0 - amount)
             );
-            emit DestroyCircle(
-                _strategyXToken,
-                _circlesCount,
-                uint256(0 - amount)
-            );
+            emit DestroyCircle(_strategyXToken, _circlesCount, uint256(0 - amount));
         }
     }
 
@@ -477,22 +426,23 @@ abstract contract LendBorrowLendStrategy is UpgradeableBase, IStrategy {
             uint256 strategyPriceUSD;
 
             if (_supplyXToken != _strategyXToken) {
-                XTokenInfo memory tokenInfo = IStrategyStatistics(
-                    strategyStatistics
-                ).getStrategyXTokenInfo(_supplyXToken, _logic);
+                XTokenInfo memory tokenInfo = IStrategyStatistics(strategyStatistics).getStrategyXTokenInfo(
+                    _supplyXToken,
+                    _logic
+                );
 
                 supplyBorrowLimitUSD = tokenInfo.borrowLimitUSD;
 
-                tokenInfo = IStrategyStatistics(_strategyStatistics)
-                    .getStrategyXTokenInfo(_strategyXToken, _logic);
+                tokenInfo = IStrategyStatistics(_strategyStatistics).getStrategyXTokenInfo(
+                    _strategyXToken,
+                    _logic
+                );
 
                 strategyPriceUSD = tokenInfo.priceUSD;
             }
 
             // Get Collateral Factor
-            (, uint256 collateralFactorStrategyApplied) = _getCollateralFactor(
-                _strategyXToken
-            );
+            (, uint256 collateralFactorStrategyApplied) = _getCollateralFactor(_strategyXToken);
 
             destructCircles(
                 _strategyXToken,
@@ -508,8 +458,7 @@ abstract contract LendBorrowLendStrategy is UpgradeableBase, IStrategy {
         ILendingLogic(_logic).claim();
 
         // Get Rewards amount
-        uint256 amountRewardsToken = IERC20MetadataUpgradeable(_rewardsToken)
-            .balanceOf(_logic);
+        uint256 amountRewardsToken = IERC20MetadataUpgradeable(_rewardsToken).balanceOf(_logic);
 
         // RewardsToken Price/Amount Kill Switch
         bool rewardsTokenKill = _rewardsPriceKillSwitch(
@@ -520,18 +469,13 @@ abstract contract LendBorrowLendStrategy is UpgradeableBase, IStrategy {
 
         // swap rewardsToken to StrategyToken
         if (rewardsTokenKill == false && amountRewardsToken > 0) {
-            _multiSwap(
-                _logic,
-                amountRewardsToken,
-                swapRewardsToStrategyTokenInfo
-            );
+            _multiSwap(_logic, amountRewardsToken, swapRewardsToStrategyTokenInfo);
         }
 
         // Process With Supply != Strategy
         if (_supplyXToken != _strategyXToken) {
-            (uint256 totalSupply, , uint256 borrowAmount) = IStrategyStatistics(
-                _strategyStatistics
-            ).getStrategyXTokenInfoCompact(_strategyXToken, _logic);
+            (uint256 totalSupply, , uint256 borrowAmount) = IStrategyStatistics(_strategyStatistics)
+                .getStrategyXTokenInfoCompact(_strategyXToken, _logic);
 
             // StrategyXToken : if totalSupply > 0, redeem it
             if (totalSupply > 0) {
@@ -543,10 +487,7 @@ abstract contract LendBorrowLendStrategy is UpgradeableBase, IStrategy {
 
             // StrategyXToken : If borrowAmount > 0, repay it
             if (borrowAmount > 0) {
-                ILendingLogic(_logic).repayBorrow(
-                    _strategyXToken,
-                    borrowAmount
-                );
+                ILendingLogic(_logic).repayBorrow(_strategyXToken, borrowAmount);
             }
 
             // SupplyXToken : Redeem everything
@@ -564,19 +505,14 @@ abstract contract LendBorrowLendStrategy is UpgradeableBase, IStrategy {
         }
 
         // Get strategy amount, current balance of underlying
-        uint256 amountStrategy = IMultiLogicProxy(multiLogicProxy)
-            .getTokenTaken(_supplyToken, _logic);
+        uint256 amountStrategy = IMultiLogicProxy(multiLogicProxy).getTokenTaken(_supplyToken, _logic);
         uint256 balanceToken = _supplyToken == ZERO_ADDRESS
             ? address(_logic).balance
             : IERC20MetadataUpgradeable(_supplyToken).balanceOf(_logic);
 
         // If we have extra, swap SupplyToken to BLID
         if (balanceToken > amountStrategy) {
-            _multiSwap(
-                _logic,
-                balanceToken - amountStrategy,
-                swapSupplyTokenToBLIDInfo
-            );
+            _multiSwap(_logic, balanceToken - amountStrategy, swapSupplyTokenToBLIDInfo);
 
             // Add BLID earn to storage
             amountBLID = _addEarnToStorage();
@@ -608,9 +544,7 @@ abstract contract LendBorrowLendStrategy is UpgradeableBase, IStrategy {
         ILendingLogic(_logic).claim();
 
         // Get Rewards amount
-        amountRewardsToken = IERC20MetadataUpgradeable(_rewardsToken).balanceOf(
-                _logic
-            );
+        amountRewardsToken = IERC20MetadataUpgradeable(_rewardsToken).balanceOf(_logic);
 
         // RewardsToken Price/Amount Kill Switch
         bool rewardsTokenKill = _rewardsPriceKillSwitch(
@@ -620,16 +554,15 @@ abstract contract LendBorrowLendStrategy is UpgradeableBase, IStrategy {
         );
 
         // Get remained amount
-        (, int256 diffStrategy) = LendBorrowLendStrategyHelper
-            .getDiffAmountForClaim(
-                _strategyStatistics,
-                _logic,
-                multiLogicProxy,
-                supplyXToken,
-                _strategyXToken,
-                supplyToken,
-                _strategyToken
-            );
+        (, int256 diffStrategy) = LendBorrowLendStrategyHelper.getDiffAmountForClaim(
+            _strategyStatistics,
+            _logic,
+            multiLogicProxy,
+            supplyXToken,
+            _strategyXToken,
+            supplyToken,
+            _strategyToken
+        );
 
         // If we need to replay, swap DF->Strategy and repay it
         if (diffStrategy > 0 && !rewardsTokenKill) {
@@ -646,32 +579,20 @@ abstract contract LendBorrowLendStrategy is UpgradeableBase, IStrategy {
                 );
             } else {
                 // If more than 2 swaps, SwapExactTokensForTokens
-                _multiSwap(
-                    _logic,
-                    amountRewardsToken,
-                    swapRewardsToStrategyTokenInfo
-                );
+                _multiSwap(_logic, amountRewardsToken, swapRewardsToStrategyTokenInfo);
             }
 
             // RepayBorrow
-            ILendingLogic(_logic).repayBorrow(
-                _strategyXToken,
-                uint256(diffStrategy)
-            );
+            ILendingLogic(_logic).repayBorrow(_strategyXToken, uint256(diffStrategy));
         }
 
         // If we need to redeem, redeem
         if (diffStrategy < 0) {
-            ILendingLogic(_logic).redeemUnderlying(
-                _strategyXToken,
-                uint256(0 - diffStrategy)
-            );
+            ILendingLogic(_logic).redeemUnderlying(_strategyXToken, uint256(0 - diffStrategy));
         }
 
         // swap Rewards to BLID
-        amountRewardsToken = IERC20MetadataUpgradeable(_rewardsToken).balanceOf(
-                _logic
-            );
+        amountRewardsToken = IERC20MetadataUpgradeable(_rewardsToken).balanceOf(_logic);
         if (amountRewardsToken > 0 && rewardsTokenKill == false) {
             _multiSwap(_logic, amountRewardsToken, swapRewardsToBLIDInfo);
             require(
@@ -686,11 +607,7 @@ abstract contract LendBorrowLendStrategy is UpgradeableBase, IStrategy {
             ? address(_logic).balance
             : IERC20MetadataUpgradeable(_strategyToken).balanceOf(_logic);
         if (balanceStrategyToken > 0) {
-            _multiSwap(
-                _logic,
-                balanceStrategyToken,
-                swapStrategyTokenToBLIDInfo
-            );
+            _multiSwap(_logic, balanceStrategyToken, swapStrategyTokenToBLIDInfo);
         }
 
         // Add BLID earn to storage
@@ -706,11 +623,7 @@ abstract contract LendBorrowLendStrategy is UpgradeableBase, IStrategy {
      * @param amount Amount of token
      * @param token Address of token
      */
-    function releaseToken(uint256 amount, address token)
-        external
-        override
-        onlyMultiLogicProxy
-    {
+    function releaseToken(uint256 amount, address token) external override onlyMultiLogicProxy {
         address _supplyXToken = supplyXToken;
         address _strategyXToken = strategyXToken;
         address _logic = logic;
@@ -726,9 +639,10 @@ abstract contract LendBorrowLendStrategy is UpgradeableBase, IStrategy {
             uint256 supplyPriceUSD;
 
             if (_supplyXToken != _strategyXToken) {
-                XTokenInfo memory tokenInfo = IStrategyStatistics(
-                    strategyStatistics
-                ).getStrategyXTokenInfo(_supplyXToken, _logic);
+                XTokenInfo memory tokenInfo = IStrategyStatistics(strategyStatistics).getStrategyXTokenInfo(
+                    _supplyXToken,
+                    _logic
+                );
 
                 supplyBorrowLimitUSD = tokenInfo.borrowLimitUSD;
                 supplyPriceUSD = tokenInfo.priceUSD;
@@ -743,28 +657,24 @@ abstract contract LendBorrowLendStrategy is UpgradeableBase, IStrategy {
                 // Get CollateralFactor
                 uint256 collateralFactorSupply;
                 uint256 collateralFactorStrategy;
-                (
-                    collateralFactorStrategy,
-                    collateralFactorStrategyApplied
-                ) = _getCollateralFactor(_strategyXToken);
-
-                (collateralFactorSupply, ) = _getCollateralFactor(
-                    _supplyXToken
+                (collateralFactorStrategy, collateralFactorStrategyApplied) = _getCollateralFactor(
+                    _strategyXToken
                 );
 
+                (collateralFactorSupply, ) = _getCollateralFactor(_supplyXToken);
+
                 // Get destroy amount
-                (destroyAmount, strategyPriceUSD) = LendBorrowLendStrategyHelper
-                    .getDestroyAmountForRelease(
-                        strategyStatistics,
-                        _logic,
-                        amount,
-                        _supplyXToken,
-                        _strategyXToken,
-                        supplyBorrowLimitUSD,
-                        supplyPriceUSD,
-                        collateralFactorSupply,
-                        collateralFactorStrategy
-                    );
+                (destroyAmount, strategyPriceUSD) = LendBorrowLendStrategyHelper.getDestroyAmountForRelease(
+                    strategyStatistics,
+                    _logic,
+                    amount,
+                    _supplyXToken,
+                    _strategyXToken,
+                    supplyBorrowLimitUSD,
+                    supplyPriceUSD,
+                    collateralFactorSupply,
+                    collateralFactorStrategy
+                );
             }
 
             // destruct circle
@@ -779,28 +689,23 @@ abstract contract LendBorrowLendStrategy is UpgradeableBase, IStrategy {
         }
 
         // Check if redeem is possible
-        (int256 diffSupply, ) = LendBorrowLendStrategyHelper
-            .getDiffAmountForClaim(
-                strategyStatistics,
-                _logic,
-                multiLogicProxy,
-                _supplyXToken,
-                _strategyXToken,
-                token,
-                strategyToken
-            );
+        (int256 diffSupply, ) = LendBorrowLendStrategyHelper.getDiffAmountForClaim(
+            strategyStatistics,
+            _logic,
+            multiLogicProxy,
+            _supplyXToken,
+            _strategyXToken,
+            token,
+            strategyToken
+        );
 
         if (
             diffSupply >=
-            IMultiLogicProxy(multiLogicProxy)
-                .getTokenTaken(token, _logic)
-                .toInt256() -
-                (amount).toInt256()
+            IMultiLogicProxy(multiLogicProxy).getTokenTaken(token, _logic).toInt256() - (amount).toInt256()
         ) {
             ILendingLogic(_logic).claim();
 
-            uint256 amountRewardsToken = IERC20MetadataUpgradeable(rewardsToken)
-                .balanceOf(_logic);
+            uint256 amountRewardsToken = IERC20MetadataUpgradeable(rewardsToken).balanceOf(_logic);
 
             bool rewardsTokenKill = _rewardsPriceKillSwitch(
                 strategyStatistics,
@@ -809,20 +714,15 @@ abstract contract LendBorrowLendStrategy is UpgradeableBase, IStrategy {
             );
             require(!rewardsTokenKill, "C10");
 
-            _multiSwap(
-                _logic,
-                amountRewardsToken,
-                swapRewardsToStrategyTokenInfo
+            _multiSwap(_logic, amountRewardsToken, swapRewardsToStrategyTokenInfo);
+
+            (, , uint256 borrowAmount) = IStrategyStatistics(strategyStatistics).getStrategyXTokenInfoCompact(
+                _strategyXToken,
+                _logic
             );
 
-            (, , uint256 borrowAmount) = IStrategyStatistics(strategyStatistics)
-                .getStrategyXTokenInfoCompact(_strategyXToken, _logic);
-
             if (borrowAmount > 0) {
-                ILendingLogic(_logic).repayBorrow(
-                    _strategyXToken,
-                    borrowAmount
-                );
+                ILendingLogic(_logic).repayBorrow(_strategyXToken, borrowAmount);
             }
         }
 
@@ -835,10 +735,7 @@ abstract contract LendBorrowLendStrategy is UpgradeableBase, IStrategy {
         }
 
         if (balance < amount) {
-            ILendingLogic(_logic).redeemUnderlying(
-                _supplyXToken,
-                amount - balance
-            );
+            ILendingLogic(_logic).redeemUnderlying(_supplyXToken, amount - balance);
         }
 
         // Send ETH
@@ -858,11 +755,7 @@ abstract contract LendBorrowLendStrategy is UpgradeableBase, IStrategy {
      * @param amount amount to build (borrowAmount)
      * @param iterateCount the number circles to
      */
-    function createCircles(
-        address xToken,
-        uint256 amount,
-        uint8 iterateCount
-    ) private {
+    function createCircles(address xToken, uint256 amount, uint8 iterateCount) private {
         address _logic = logic;
         uint256 _amount = amount;
 
@@ -925,11 +818,8 @@ abstract contract LendBorrowLendStrategy is UpgradeableBase, IStrategy {
                 // calculates of supplied balance, divided by 10^18 to safe digits correctly
                 {
                     //conversion rate from iToken to token
-                    uint256 exchangeRateMantissa = IXToken(xToken)
-                        .exchangeRateStored();
-                    supplyBalance =
-                        (xTokenBalance * exchangeRateMantissa) /
-                        BASE;
+                    uint256 exchangeRateMantissa = IXToken(xToken).exchangeRateStored();
+                    supplyBalance = (xTokenBalance * exchangeRateMantissa) / BASE;
                 }
 
                 // if nothing to repay
@@ -950,15 +840,11 @@ abstract contract LendBorrowLendStrategy is UpgradeableBase, IStrategy {
             // calculates how much percents could be borrowed and not to be liquidated, then multiply fo supply balance to calculate the amount
             uint256 withdrawBalance;
             if (matched) {
-                withdrawBalance =
-                    (supplyBalance * collateralFactorApplied) /
-                    BASE -
-                    borrowBalance;
+                withdrawBalance = (supplyBalance * collateralFactorApplied) / BASE - borrowBalance;
             } else {
                 withdrawBalance =
                     ((supplyBorrowLimitUSD +
-                        (((supplyBalance * collateralFactorApplied) / BASE) *
-                            priceUSD) /
+                        (((supplyBalance * collateralFactorApplied) / BASE) * priceUSD) /
                         BASE -
                         (borrowBalance * priceUSD) /
                         BASE) * BASE) /
@@ -971,9 +857,7 @@ abstract contract LendBorrowLendStrategy is UpgradeableBase, IStrategy {
             }
 
             // If we have destroylimit, redeem only limit
-            if (
-                destroyAmountLimit > 0 && withdrawBalance > _destroyAmountLimit
-            ) {
+            if (destroyAmountLimit > 0 && withdrawBalance > _destroyAmountLimit) {
                 withdrawBalance = _destroyAmountLimit;
             }
 
@@ -1012,9 +896,8 @@ abstract contract LendBorrowLendStrategy is UpgradeableBase, IStrategy {
         address _strategyXToken = strategyXToken;
         if (_strategyXToken == ZERO_ADDRESS) return true;
 
-        (uint256 totalSupply, , uint256 borrowAmount) = IStrategyStatistics(
-            strategyStatistics
-        ).getStrategyXTokenInfoCompact(_strategyXToken, logic);
+        (uint256 totalSupply, , uint256 borrowAmount) = IStrategyStatistics(strategyStatistics)
+            .getStrategyXTokenInfoCompact(_strategyXToken, logic);
 
         if (totalSupply > 0 || borrowAmount > 0) {
             paused = false;
@@ -1048,16 +931,15 @@ abstract contract LendBorrowLendStrategy is UpgradeableBase, IStrategy {
         uint256 _amountRewardsToken
     ) private returns (bool killSwitch) {
         uint256 latestAnswer;
-        (latestAnswer, killSwitch) = LendBorrowLendStrategyHelper
-            .checkRewardsPriceKillSwitch(
-                _strategyStatistics,
-                comptroller,
-                _rewardsToken,
-                _amountRewardsToken,
-                rewardsTokenPriceInfo,
-                rewardsTokenPriceDeviationLimit,
-                minRewardsSwapLimit
-            );
+        (latestAnswer, killSwitch) = LendBorrowLendStrategyHelper.checkRewardsPriceKillSwitch(
+            _strategyStatistics,
+            comptroller,
+            _rewardsToken,
+            _amountRewardsToken,
+            rewardsTokenPriceInfo,
+            rewardsTokenPriceDeviationLimit,
+            minRewardsSwapLimit
+        );
 
         // Keep current status
         rewardsTokenPriceInfo.latestAnswer = latestAnswer;
@@ -1067,18 +949,12 @@ abstract contract LendBorrowLendStrategy is UpgradeableBase, IStrategy {
     /**
      * @notice Swap tokens base on SwapInfo
      */
-    function _multiSwap(
-        address _logic,
-        uint256 amount,
-        SwapInfo memory swapInfo
-    ) private {
+    function _multiSwap(address _logic, uint256 amount, SwapInfo memory swapInfo) private {
         for (uint256 i = 0; i < swapInfo.swapRouters.length; ) {
             if (i > 0) {
                 amount = swapInfo.paths[i][0] == ZERO_ADDRESS
                     ? address(_logic).balance
-                    : IERC20MetadataUpgradeable(swapInfo.paths[i][0]).balanceOf(
-                            _logic
-                        );
+                    : IERC20MetadataUpgradeable(swapInfo.paths[i][0]).balanceOf(_logic);
             }
 
             ILogic(_logic).swap(
@@ -1101,10 +977,7 @@ abstract contract LendBorrowLendStrategy is UpgradeableBase, IStrategy {
      * call Logic.addXTokens
      * call Logic.enterMarkets
      */
-    function _registerToken(address xToken, address _logic)
-        private
-        returns (address underlying)
-    {
+    function _registerToken(address xToken, address _logic) private returns (address underlying) {
         underlying = _getUnderlying(xToken);
 
         // Add token/iToken to Logic
@@ -1125,29 +998,16 @@ abstract contract LendBorrowLendStrategy is UpgradeableBase, IStrategy {
      * @return collateralFactor decimal = 18
      * @return collateralFactorApplied decimal = 18
      */
-    function _getCollateralFactor(address xToken)
-        internal
-        view
-        virtual
-        returns (uint256 collateralFactor, uint256 collateralFactorApplied)
-    {}
+    function _getCollateralFactor(
+        address xToken
+    ) internal view virtual returns (uint256 collateralFactor, uint256 collateralFactorApplied) {}
 
-    function _getUnderlying(address xToken)
-        internal
-        view
-        virtual
-        returns (address)
-    {
+    function _getUnderlying(address xToken) internal view virtual returns (address) {
         return IXToken(xToken).underlying();
     }
 
     /**
      * @notice Get Rewards token from compound
      */
-    function _getRewardsToken(address _comptroller)
-        internal
-        view
-        virtual
-        returns (address)
-    {}
+    function _getRewardsToken(address _comptroller) internal view virtual returns (address) {}
 }

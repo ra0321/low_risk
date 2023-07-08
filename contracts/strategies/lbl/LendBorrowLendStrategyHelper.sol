@@ -4,8 +4,8 @@ pragma solidity ^0.8.13;
 pragma abicoder v2;
 
 import "@openzeppelin/contracts-upgradeable/utils/math/SafeCastUpgradeable.sol";
-import "./../../interfaces/IStrategyStatistics.sol";
-import "./../../interfaces/IMultiLogicProxy.sol";
+import "./../../Interfaces/IStrategyStatistics.sol";
+import "./../../Interfaces/IMultiLogicProxy.sol";
 
 struct RebalanceParam {
     address strategyStatistics;
@@ -33,7 +33,7 @@ struct SwapInfo {
 library LendBorrowLendStrategyHelper {
     using SafeCastUpgradeable for uint256;
 
-    uint256 internal constant BASE = 10**DECIMALS;
+    uint256 internal constant BASE = 10 ** DECIMALS;
     uint256 internal constant DECIMALS = 18;
 
     /**
@@ -56,23 +56,20 @@ library LendBorrowLendStrategyHelper {
         uint256 borrowAmount;
 
         if (supplyXToken == strategyXToken) {
-            (totalSupply, borrowLimit, borrowAmount) = IStrategyStatistics(
-                strategyStatistics
-            ).getStrategyXTokenInfoCompact(strategyXToken, logic);
+            (totalSupply, borrowLimit, borrowAmount) = IStrategyStatistics(strategyStatistics)
+                .getStrategyXTokenInfoCompact(strategyXToken, logic);
         } else {
-            XTokenInfo memory supplyInfo = IStrategyStatistics(
-                strategyStatistics
-            ).getStrategyXTokenInfo(supplyXToken, logic);
-            XTokenInfo memory strategyInfo = IStrategyStatistics(
-                strategyStatistics
-            ).getStrategyXTokenInfo(strategyXToken, logic);
+            XTokenInfo memory supplyInfo = IStrategyStatistics(strategyStatistics).getStrategyXTokenInfo(
+                supplyXToken,
+                logic
+            );
+            XTokenInfo memory strategyInfo = IStrategyStatistics(strategyStatistics).getStrategyXTokenInfo(
+                strategyXToken,
+                logic
+            );
 
-            totalSupply =
-                supplyInfo.totalSupplyUSD +
-                strategyInfo.totalSupplyUSD;
-            borrowLimit =
-                supplyInfo.borrowLimitUSD +
-                strategyInfo.borrowLimitUSD;
+            totalSupply = supplyInfo.totalSupplyUSD + strategyInfo.totalSupplyUSD;
+            borrowLimit = supplyInfo.borrowLimitUSD + strategyInfo.borrowLimitUSD;
             borrowAmount = strategyInfo.borrowAmountUSD;
         }
 
@@ -85,35 +82,26 @@ library LendBorrowLendStrategyHelper {
      * @notice Get BorrowRate of strategy
      * @return amount amount > 0 : build Amount, amount < 0 : destroy Amount
      */
-    function getRebalanceAmount(RebalanceParam memory param)
-        public
-        view
-        returns (int256 amount, uint256 priceUSD)
-    {
+    function getRebalanceAmount(
+        RebalanceParam memory param
+    ) public view returns (int256 amount, uint256 priceUSD) {
         uint256 borrowRate;
-        uint256 targetBorrowRate = param.borrowRateMin +
-            (param.borrowRateMax - param.borrowRateMin) /
-            2;
+        uint256 targetBorrowRate = param.borrowRateMin + (param.borrowRateMax - param.borrowRateMin) / 2;
         uint256 totalSupply;
         uint256 borrowLimit;
         uint256 borrowAmount;
         uint256 P = 0; // Borrow Limit of supplyXToken
 
         if (param.supplyXToken == param.strategyXToken) {
-            (totalSupply, borrowLimit, borrowAmount) = IStrategyStatistics(
-                param.strategyStatistics
-            ).getStrategyXTokenInfoCompact(param.strategyXToken, param.logic);
+            (totalSupply, borrowLimit, borrowAmount) = IStrategyStatistics(param.strategyStatistics)
+                .getStrategyXTokenInfoCompact(param.strategyXToken, param.logic);
 
-            borrowRate = borrowLimit == 0
-                ? 0
-                : (borrowAmount * BASE) / borrowLimit;
+            borrowRate = borrowLimit == 0 ? 0 : (borrowAmount * BASE) / borrowLimit;
         } else {
-            XTokenInfo memory strategyInfo = IStrategyStatistics(
-                param.strategyStatistics
-            ).getStrategyXTokenInfo(param.strategyXToken, param.logic);
+            XTokenInfo memory strategyInfo = IStrategyStatistics(param.strategyStatistics)
+                .getStrategyXTokenInfo(param.strategyXToken, param.logic);
 
-            borrowRate = (param.supplyBorrowLimitUSD +
-                strategyInfo.borrowLimitUSD) == 0
+            borrowRate = (param.supplyBorrowLimitUSD + strategyInfo.borrowLimitUSD) == 0
                 ? 0
                 : (strategyInfo.borrowAmountUSD * BASE) /
                     (param.supplyBorrowLimitUSD + strategyInfo.borrowLimitUSD);
@@ -131,23 +119,18 @@ library LendBorrowLendStrategyHelper {
                 uint256 accLTV = BASE;
                 for (uint256 i = 0; i < param.circlesCount; ) {
                     Y = Y + accLTV;
-                    accLTV =
-                        (accLTV * param.collateralFactorStrategyApplied) /
-                        BASE;
+                    accLTV = (accLTV * param.collateralFactorStrategyApplied) / BASE;
                     unchecked {
                         ++i;
                     }
                 }
             }
-            uint256 buildAmount = ((((((totalSupply * targetBorrowRate) /
-                BASE) * param.collateralFactorStrategy) / BASE) +
+            uint256 buildAmount = ((((((totalSupply * targetBorrowRate) / BASE) *
+                param.collateralFactorStrategy) / BASE) +
                 (targetBorrowRate * P) /
                 BASE -
                 borrowAmount) * BASE) /
-                ((Y *
-                    (BASE -
-                        (targetBorrowRate * param.collateralFactorStrategy) /
-                        BASE)) / BASE);
+                ((Y * (BASE - (targetBorrowRate * param.collateralFactorStrategy) / BASE)) / BASE);
             amount = (buildAmount).toInt256();
         }
 
@@ -156,12 +139,8 @@ library LendBorrowLendStrategyHelper {
             uint256 destroyAmount = ((borrowAmount -
                 (P * targetBorrowRate) /
                 BASE -
-                (((totalSupply * targetBorrowRate) / BASE) *
-                    param.collateralFactorStrategy) /
-                BASE) * BASE) /
-                (BASE -
-                    (targetBorrowRate * param.collateralFactorStrategy) /
-                    BASE);
+                (((totalSupply * targetBorrowRate) / BASE) * param.collateralFactorStrategy) /
+                BASE) * BASE) / (BASE - (targetBorrowRate * param.collateralFactorStrategy) / BASE);
 
             amount = 0 - (destroyAmount).toInt256();
         }
@@ -184,17 +163,15 @@ library LendBorrowLendStrategyHelper {
         uint256 collateralFactorStrategy
     ) public view returns (uint256 destroyAmount, uint256 strategyPriceUSD) {
         if (supplyXToken == strategyXToken) {
-            (uint256 totalSupply, , uint256 borrowAmount) = IStrategyStatistics(
-                strategyStatistics
-            ).getStrategyXTokenInfoCompact(strategyXToken, logic);
+            (uint256 totalSupply, , uint256 borrowAmount) = IStrategyStatistics(strategyStatistics)
+                .getStrategyXTokenInfoCompact(strategyXToken, logic);
 
-            destroyAmount =
-                (borrowAmount * releaseAmount) /
-                (totalSupply - borrowAmount);
+            destroyAmount = (borrowAmount * releaseAmount) / (totalSupply - borrowAmount);
         } else {
-            XTokenInfo memory strategyInfo = IStrategyStatistics(
-                strategyStatistics
-            ).getStrategyXTokenInfo(strategyXToken, logic);
+            XTokenInfo memory strategyInfo = IStrategyStatistics(strategyStatistics).getStrategyXTokenInfo(
+                strategyXToken,
+                logic
+            );
 
             strategyPriceUSD = strategyInfo.priceUSD;
 
@@ -227,43 +204,34 @@ library LendBorrowLendStrategyHelper {
         address strategyToken
     ) public view returns (int256 diffSupply, int256 diffStrategy) {
         if (supplyXToken == strategyXToken) {
-            (uint256 totalSupply, , uint256 borrowAmount) = IStrategyStatistics(
-                strategyStatistics
-            ).getStrategyXTokenInfoCompact(strategyXToken, logic);
+            (uint256 totalSupply, , uint256 borrowAmount) = IStrategyStatistics(strategyStatistics)
+                .getStrategyXTokenInfoCompact(strategyXToken, logic);
 
             diffSupply =
-                (
-                    IMultiLogicProxy(multiLogicProxy).getTokenTaken(
-                        strategyToken,
-                        logic
-                    )
-                ).toInt256() -
+                (IMultiLogicProxy(multiLogicProxy).getTokenTaken(strategyToken, logic)).toInt256() -
                 (totalSupply).toInt256() +
                 (borrowAmount).toInt256();
             diffStrategy = diffSupply;
         } else {
-            XTokenInfo memory supplyInfo = IStrategyStatistics(
-                strategyStatistics
-            ).getStrategyXTokenInfo(supplyXToken, logic);
+            XTokenInfo memory supplyInfo = IStrategyStatistics(strategyStatistics).getStrategyXTokenInfo(
+                supplyXToken,
+                logic
+            );
 
-            XTokenInfo memory strategyInfo = IStrategyStatistics(
-                strategyStatistics
-            ).getStrategyXTokenInfo(strategyXToken, logic);
+            XTokenInfo memory strategyInfo = IStrategyStatistics(strategyStatistics).getStrategyXTokenInfo(
+                strategyXToken,
+                logic
+            );
 
-            uint256 lendingAmountUSD = (IMultiLogicProxy(multiLogicProxy)
-                .getTokenTaken(supplyToken, logic) * supplyInfo.priceUSD) /
-                BASE;
+            uint256 lendingAmountUSD = (IMultiLogicProxy(multiLogicProxy).getTokenTaken(supplyToken, logic) *
+                supplyInfo.priceUSD) / BASE;
 
             int256 diff = (lendingAmountUSD).toInt256() -
                 (supplyInfo.totalSupplyUSD).toInt256() -
                 (strategyInfo.totalSupplyUSD).toInt256() +
                 (strategyInfo.borrowAmountUSD).toInt256();
-            diffSupply =
-                (diff * (BASE).toInt256()) /
-                (supplyInfo.priceUSD).toInt256();
-            diffStrategy =
-                (diff * (BASE).toInt256()) /
-                (strategyInfo.priceUSD).toInt256();
+            diffSupply = (diff * (BASE).toInt256()) / (supplyInfo.priceUSD).toInt256();
+            diffStrategy = (diff * (BASE).toInt256()) / (strategyInfo.priceUSD).toInt256();
         }
     }
 
@@ -320,26 +288,23 @@ library LendBorrowLendStrategyHelper {
         killSwitch = false;
 
         // Get latest Answer
-        latestAnswer = IStrategyStatistics(strategyStatistics)
-            .getRewardsTokenPrice(comptroller, rewardsToken);
+        latestAnswer = IStrategyStatistics(strategyStatistics).getRewardsTokenPrice(
+            comptroller,
+            rewardsToken
+        );
 
         // Calculate Delta
-        int256 delta = (rewardsTokenPriceInfo.latestAnswer).toInt256() -
-            (latestAnswer).toInt256();
+        int256 delta = (rewardsTokenPriceInfo.latestAnswer).toInt256() - (latestAnswer).toInt256();
         if (delta < 0) delta = 0 - delta;
 
         // Check deviation
-        if (
-            block.timestamp == rewardsTokenPriceInfo.timestamp ||
-            rewardsTokenPriceInfo.latestAnswer == 0
-        ) {
+        if (block.timestamp == rewardsTokenPriceInfo.timestamp || rewardsTokenPriceInfo.latestAnswer == 0) {
             delta = 0;
         } else {
             delta =
                 (delta * (1 ether)) /
                 ((rewardsTokenPriceInfo.latestAnswer).toInt256() *
-                    ((block.timestamp).toInt256() -
-                        (rewardsTokenPriceInfo.timestamp).toInt256()));
+                    ((block.timestamp).toInt256() - (rewardsTokenPriceInfo.timestamp).toInt256()));
         }
         if (uint256(delta) > rewardsTokenPriceDeviationLimit) {
             killSwitch = true;

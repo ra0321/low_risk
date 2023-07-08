@@ -3,7 +3,7 @@
 pragma solidity ^0.8.13;
 
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
-import "./interfaces/IStrategyContract.sol";
+import "./Interfaces/IStrategyContract.sol";
 import "./utils/UpgradeableBase.sol";
 
 interface AutomationCompatibleInterface {
@@ -24,9 +24,9 @@ interface AutomationCompatibleInterface {
      * upkeep is needed. If you would like to encode data to decode later, try
      * `abi.encode`.
      */
-    function checkUpkeep(bytes calldata checkData)
-        external
-        returns (bool upkeepNeeded, bytes memory performData);
+    function checkUpkeep(
+        bytes calldata checkData
+    ) external returns (bool upkeepNeeded, bytes memory performData);
 
     /**
      * @notice method that is actually executed by the keepers, via the registry.
@@ -47,11 +47,7 @@ interface AutomationCompatibleInterface {
     function performUpkeep(bytes calldata performData) external;
 }
 
-contract Automation is
-    UpgradeableBase,
-    PausableUpgradeable,
-    AutomationCompatibleInterface
-{
+contract Automation is UpgradeableBase, PausableUpgradeable, AutomationCompatibleInterface {
     address public keeper;
 
     event SetKeeper(address keeper);
@@ -103,14 +99,9 @@ contract Automation is
      * @return upkeepNeeded if true performUpkeep() is run
      * @return performData data passed to performUpkeep()
      */
-    function checkUpkeep(bytes calldata checkData)
-        external
-        view
-        override
-        whenNotPaused
-        onlyKeeper
-        returns (bool upkeepNeeded, bytes memory performData)
-    {
+    function checkUpkeep(
+        bytes calldata checkData
+    ) external view override whenNotPaused onlyKeeper returns (bool upkeepNeeded, bytes memory performData) {
         // Decode calldata
         address strategy = abi.decode(checkData, (address));
 
@@ -136,15 +127,12 @@ contract Automation is
      * @notice Chainlink call to perform keep
      * @param performData calldata from Chainlink, generated from checkUpkeep()
      */
-    function performUpkeep(bytes calldata performData)
-        external
-        override
-        whenNotPaused
-        onlyKeeper
-    {
+    function performUpkeep(bytes calldata performData) external override whenNotPaused onlyKeeper {
         // Decode data
-        (address strategy, bool performUseToken, bool perfomRebalance) = abi
-            .decode(performData, (address, bool, bool));
+        (address strategy, bool performUseToken, bool perfomRebalance) = abi.decode(
+            performData,
+            (address, bool, bool)
+        );
 
         // Process perform
         if (performUseToken) IStrategy(strategy).useToken();
@@ -156,12 +144,9 @@ contract Automation is
      * @notice Gelato resolver call to check "useToken()" is possible
      * @param strategy address of strategy
      */
-    function gelatoCheckerUseToken(address strategy)
-        external
-        view
-        whenNotPaused
-        returns (bool canExec, bytes memory execPayload)
-    {
+    function gelatoCheckerUseToken(
+        address strategy
+    ) external view whenNotPaused returns (bool canExec, bytes memory execPayload) {
         canExec = IStrategy(strategy).checkUseToken();
         if (canExec) {
             execPayload = abi.encodeWithSelector(IStrategy.useToken.selector);
@@ -172,12 +157,9 @@ contract Automation is
      * @notice Gelato resolver call to check "rebalance()" is possible
      * @param strategy address of strategy
      */
-    function gelatoCheckerRebalance(address strategy)
-        external
-        view
-        whenNotPaused
-        returns (bool canExec, bytes memory execPayload)
-    {
+    function gelatoCheckerRebalance(
+        address strategy
+    ) external view whenNotPaused returns (bool canExec, bytes memory execPayload) {
         canExec = IStrategy(strategy).checkRebalance();
         if (canExec) {
             execPayload = abi.encodeWithSelector(IStrategy.rebalance.selector);

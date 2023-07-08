@@ -4,9 +4,9 @@ pragma solidity ^0.8.13;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
-import "./interfaces/IStorage.sol";
-import "./interfaces/ILogicContract.sol";
-import "./interfaces/IStrategyContract.sol";
+import "./Interfaces/IStorage.sol";
+import "./Interfaces/ILogicContract.sol";
+import "./Interfaces/IStrategyContract.sol";
 import "./utils/OwnableUpgradeableAdminable.sol";
 import "./utils/UpgradeableBase.sol";
 
@@ -36,11 +36,7 @@ contract MultiLogic is UpgradeableBase {
     event ReleaseToken(address token, uint256 amount);
     event AddStrategy(string name, singleStrategy strategies);
     event InitStrategy(string[] strategiesName, singleStrategy[] strategies);
-    event SetLogicTokenAvailable(
-        uint256 amount,
-        address token,
-        uint256 deposit_flag
-    );
+    event SetLogicTokenAvailable(uint256 amount, address token, uint256 deposit_flag);
 
     function __MultiLogicProxy_init() public initializer {
         UpgradeableBase.initialize();
@@ -78,10 +74,7 @@ contract MultiLogic is UpgradeableBase {
      * @param _token token address
      * @param _percentages percentage array
      */
-    function setPercentages(address _token, uint256[] calldata _percentages)
-        external
-        onlyOwner
-    {
+    function setPercentages(address _token, uint256[] calldata _percentages) external onlyOwner {
         uint256 _count = multiStrategyLength;
         uint256 sumAvailable = 0;
         uint256 index;
@@ -101,23 +94,14 @@ contract MultiLogic is UpgradeableBase {
 
         // Get sum of available
         for (index = 0; index < _count; ) {
-            singleStrategy memory _multiStrategy = multiStrategyData[
-                multiStrategyName[index]
-            ];
-            require(
-                tokenBalanceLogic[_token][_multiStrategy.logicContract] == 0,
-                "M11"
-            );
+            singleStrategy memory _multiStrategy = multiStrategyData[multiStrategyName[index]];
+            require(tokenBalanceLogic[_token][_multiStrategy.logicContract] == 0, "M11");
 
             // Calculate sum
-            sumAvailable += tokenAvailableLogic[_token][
-                _multiStrategy.logicContract
-            ];
+            sumAvailable += tokenAvailableLogic[_token][_multiStrategy.logicContract];
 
             // Set percentage
-            dividePercentage[_token][
-                _multiStrategy.logicContract
-            ] = _percentages[index];
+            dividePercentage[_token][_multiStrategy.logicContract] = _percentages[index];
 
             unchecked {
                 ++index;
@@ -158,9 +142,7 @@ contract MultiLogic is UpgradeableBase {
     ) external onlyOwner {
         // Remove exist strategies
         for (uint256 i = 0; i < multiStrategyLength; ) {
-            isExistLogic[
-                multiStrategyData[multiStrategyName[i]].logicContract
-            ] = false;
+            isExistLogic[multiStrategyData[multiStrategyName[i]].logicContract] = false;
 
             unchecked {
                 ++i;
@@ -213,9 +195,7 @@ contract MultiLogic is UpgradeableBase {
         }
 
         if (exist) {
-            isExistLogic[
-                multiStrategyData[_strategyName].logicContract
-            ] = false;
+            isExistLogic[multiStrategyData[_strategyName].logicContract] = false;
         } else {
             multiStrategyName.push(_strategyName);
             multiStrategyLength++;
@@ -235,27 +215,21 @@ contract MultiLogic is UpgradeableBase {
      * @param _token deposit token
      * @param _deposit_withdraw flag for deposit or withdraw 1 : increase, 0: decrease, 2: set
      */
-    function setLogicTokenAvailable(
-        uint256 _amount,
-        address _token,
-        uint256 _deposit_withdraw
-    ) external {
+    function setLogicTokenAvailable(uint256 _amount, address _token, uint256 _deposit_withdraw) external {
         require(msg.sender == owner() || msg.sender == storageContract, "M1");
 
         uint256 _count = multiStrategyLength;
         uint256 _amountDelta = 0;
         uint256 sum = 0;
         for (uint256 i = 0; i < _count; i++) {
-            address logicAddress = multiStrategyData[multiStrategyName[i]]
-                .logicContract;
+            address logicAddress = multiStrategyData[multiStrategyName[i]].logicContract;
             uint256 newAvailableAmount;
 
             if (i == _count - 1) {
                 newAvailableAmount = _amount - sum;
             } else {
                 newAvailableAmount =
-                    ((_amount * dividePercentage[_token][logicAddress]) /
-                        10000) +
+                    ((_amount * dividePercentage[_token][logicAddress]) / 10000) +
                     _amountDelta;
 
                 sum += newAvailableAmount;
@@ -266,18 +240,11 @@ contract MultiLogic is UpgradeableBase {
                 tokenAvailableLogic[_token][logicAddress] += newAvailableAmount;
             } else if (_deposit_withdraw == 0) {
                 // decrease
-                if (
-                    tokenAvailableLogic[_token][logicAddress] >=
-                    newAvailableAmount
-                ) {
-                    tokenAvailableLogic[_token][
-                        logicAddress
-                    ] -= newAvailableAmount;
+                if (tokenAvailableLogic[_token][logicAddress] >= newAvailableAmount) {
+                    tokenAvailableLogic[_token][logicAddress] -= newAvailableAmount;
                     _amountDelta = 0;
                 } else {
-                    _amountDelta =
-                        newAvailableAmount -
-                        tokenAvailableLogic[_token][logicAddress];
+                    _amountDelta = newAvailableAmount - tokenAvailableLogic[_token][logicAddress];
                     tokenAvailableLogic[_token][logicAddress] = 0;
                     sum -= _amountDelta;
                 }
@@ -290,18 +257,12 @@ contract MultiLogic is UpgradeableBase {
         // if we have delta, then decrease available for previous strategy
         if (_deposit_withdraw == 0 && _amountDelta > 0) {}
         for (uint256 i = 0; i < _count; ) {
-            singleStrategy memory sStrategy = multiStrategyData[
-                multiStrategyName[i]
-            ];
+            singleStrategy memory sStrategy = multiStrategyData[multiStrategyName[i]];
 
-            uint256 available = tokenAvailableLogic[_token][
-                sStrategy.logicContract
-            ];
+            uint256 available = tokenAvailableLogic[_token][sStrategy.logicContract];
             if (available > 0) {
                 if (available >= _amountDelta) {
-                    tokenAvailableLogic[_token][
-                        sStrategy.logicContract
-                    ] -= _amountDelta;
+                    tokenAvailableLogic[_token][sStrategy.logicContract] -= _amountDelta;
                     _amountDelta = 0;
 
                     break;
@@ -324,19 +285,14 @@ contract MultiLogic is UpgradeableBase {
      * @param _amount Amount of token
      * @param _token Address of token
      */
-    function releaseToken(uint256 _amount, address _token)
-        external
-        onlyStorage
-    {
+    function releaseToken(uint256 _amount, address _token) external onlyStorage {
         uint256 _count = multiStrategyLength;
         uint256 _amountDelta = 0;
         uint256[] memory releaseAmounts = new uint256[](_count);
         uint256 _amountReleaseSum = 0;
 
         for (uint256 i = 0; i < _count; ) {
-            singleStrategy memory sStrategy = multiStrategyData[
-                multiStrategyName[i]
-            ];
+            singleStrategy memory sStrategy = multiStrategyData[multiStrategyName[i]];
 
             uint256 releaseAmount;
             if (i == _count - 1) {
@@ -345,16 +301,13 @@ contract MultiLogic is UpgradeableBase {
             } else {
                 // releaseAmount = percentage + sweeped delta from previous strategy
                 releaseAmount =
-                    (_amount *
-                        dividePercentage[_token][sStrategy.logicContract]) /
+                    (_amount * dividePercentage[_token][sStrategy.logicContract]) /
                     10000 +
                     _amountDelta;
             }
 
             // If balance < releaseAmount, release balance and sweep delta to next strategy
-            uint256 balance = tokenBalanceLogic[_token][
-                sStrategy.logicContract
-            ];
+            uint256 balance = tokenBalanceLogic[_token][sStrategy.logicContract];
             if (balance < releaseAmount) {
                 _amountDelta = releaseAmount - balance;
                 releaseAmount = balance;
@@ -364,9 +317,7 @@ contract MultiLogic is UpgradeableBase {
 
             // Decrease balance
             if (releaseAmount > 0) {
-                tokenBalanceLogic[_token][
-                    sStrategy.logicContract
-                ] -= releaseAmount;
+                tokenBalanceLogic[_token][sStrategy.logicContract] -= releaseAmount;
 
                 releaseAmounts[i] = releaseAmount;
 
@@ -386,19 +337,13 @@ contract MultiLogic is UpgradeableBase {
         // if we have delta, then increase releaseAmount for available strategies
         if (_amountDelta > 0) {
             for (uint256 i = 0; i < _count; ) {
-                singleStrategy memory sStrategy = multiStrategyData[
-                    multiStrategyName[i]
-                ];
+                singleStrategy memory sStrategy = multiStrategyData[multiStrategyName[i]];
 
-                uint256 balance = tokenBalanceLogic[_token][
-                    sStrategy.logicContract
-                ];
+                uint256 balance = tokenBalanceLogic[_token][sStrategy.logicContract];
                 if (balance > 0) {
                     if (balance >= _amountDelta) {
                         releaseAmounts[i] += _amountDelta;
-                        tokenBalanceLogic[_token][
-                            sStrategy.logicContract
-                        ] -= _amountDelta;
+                        tokenBalanceLogic[_token][sStrategy.logicContract] -= _amountDelta;
                         _amountDelta = 0;
 
                         break;
@@ -420,14 +365,9 @@ contract MultiLogic is UpgradeableBase {
         // Interaction
         for (uint256 i = 0; i < _count; ) {
             if (releaseAmounts[i] > 0) {
-                singleStrategy memory sStrategy = multiStrategyData[
-                    multiStrategyName[i]
-                ];
+                singleStrategy memory sStrategy = multiStrategyData[multiStrategyName[i]];
 
-                IStrategy(sStrategy.strategyContract).releaseToken(
-                    releaseAmounts[i],
-                    _token
-                );
+                IStrategy(sStrategy.strategyContract).releaseToken(releaseAmounts[i], _token);
 
                 if (_token != ZERO_ADDRESS) {
                     IERC20Upgradeable(_token).safeTransferFrom(
@@ -449,10 +389,7 @@ contract MultiLogic is UpgradeableBase {
         } else {
             if (!approvedTokens[_token]) {
                 //if token not approved for storage
-                IERC20Upgradeable(_token).approve(
-                    storageContract,
-                    type(uint256).max
-                );
+                IERC20Upgradeable(_token).approve(storageContract, type(uint256).max);
                 approvedTokens[_token] = true;
             }
         }
@@ -467,10 +404,7 @@ contract MultiLogic is UpgradeableBase {
      * @param _amount Amount of token
      * @param _token Address of token
      */
-    function takeToken(uint256 _amount, address _token)
-        external
-        onlyExistLogic
-    {
+    function takeToken(uint256 _amount, address _token) external onlyExistLogic {
         uint256 tokenAvailable = getTokenAvailable(_token, msg.sender);
         require(_amount <= tokenAvailable, "M6");
 
@@ -495,10 +429,7 @@ contract MultiLogic is UpgradeableBase {
      * @param _amount Amount of token
      * @param _token Address of token
      */
-    function returnToken(uint256 _amount, address _token)
-        external
-        onlyExistLogic
-    {
+    function returnToken(uint256 _amount, address _token) external onlyExistLogic {
         require(_amount <= tokenBalanceLogic[_token][msg.sender], "M6");
 
         tokenAvailableLogic[_token][msg.sender] += _amount;
@@ -511,18 +442,11 @@ contract MultiLogic is UpgradeableBase {
         } else {
             if (!approvedTokens[_token]) {
                 //if token not approved for storage
-                IERC20Upgradeable(_token).approve(
-                    storageContract,
-                    type(uint256).max
-                );
+                IERC20Upgradeable(_token).approve(storageContract, type(uint256).max);
                 approvedTokens[_token] = true;
             }
 
-            IERC20Upgradeable(_token).safeTransferFrom(
-                msg.sender,
-                address(this),
-                _amount
-            );
+            IERC20Upgradeable(_token).safeTransferFrom(msg.sender, address(this), _amount);
         }
 
         IStorage(storageContract).returnToken(_amount, _token);
@@ -535,24 +459,14 @@ contract MultiLogic is UpgradeableBase {
      * @param _amount Amount of distributes earned BLID
      * @param _blidToken blidToken address
      */
-    function addEarn(uint256 _amount, address _blidToken)
-        external
-        onlyExistLogic
-    {
+    function addEarn(uint256 _amount, address _blidToken) external onlyExistLogic {
         if (!approvedTokens[_blidToken]) {
             //if token not approved for storage
-            IERC20Upgradeable(_blidToken).approve(
-                storageContract,
-                type(uint256).max
-            );
+            IERC20Upgradeable(_blidToken).approve(storageContract, type(uint256).max);
             approvedTokens[_blidToken] = true;
         }
 
-        IERC20Upgradeable(_blidToken).safeTransferFrom(
-            msg.sender,
-            address(this),
-            _amount
-        );
+        IERC20Upgradeable(_blidToken).safeTransferFrom(msg.sender, address(this), _amount);
 
         IStorage(storageContract).addEarn(_amount);
     }
@@ -571,11 +485,7 @@ contract MultiLogic is UpgradeableBase {
      * @param _token deposit token
      * @param _logicAddress logic Address
      */
-    function getTokenAvailable(address _token, address _logicAddress)
-        public
-        view
-        returns (uint256)
-    {
+    function getTokenAvailable(address _token, address _logicAddress) public view returns (uint256) {
         return tokenAvailableLogic[_token][_logicAddress];
     }
 
@@ -584,11 +494,7 @@ contract MultiLogic is UpgradeableBase {
      * @param _token deposit token
      * @param _logicAddress logic Address
      */
-    function getTokenTaken(address _token, address _logicAddress)
-        public
-        view
-        returns (uint256)
-    {
+    function getTokenTaken(address _token, address _logicAddress) public view returns (uint256) {
         return tokenBalanceLogic[_token][_logicAddress];
     }
 
@@ -596,17 +502,11 @@ contract MultiLogic is UpgradeableBase {
      * @notice Return percentage value
      * @param _token deposit token
      */
-    function getPercentage(address _token)
-        external
-        view
-        returns (uint256[] memory)
-    {
+    function getPercentage(address _token) external view returns (uint256[] memory) {
         uint256 _count = multiStrategyLength;
         uint256[] memory ret = new uint256[](_count);
         for (uint256 i = 0; i < _count; i++) {
-            ret[i] = dividePercentage[_token][
-                multiStrategyData[multiStrategyName[i]].logicContract
-            ];
+            ret[i] = dividePercentage[_token][multiStrategyData[multiStrategyName[i]].logicContract];
         }
         return ret;
     }
@@ -615,17 +515,10 @@ contract MultiLogic is UpgradeableBase {
      * @notice Set the Logic address into MultiLogicProxy
      * @param _name strategy name
      */
-    function strategyInfo(string memory _name)
-        external
-        view
-        returns (address, address)
-    {
+    function strategyInfo(string memory _name) external view returns (address, address) {
         bool exist = false;
         for (uint256 i = 0; i < multiStrategyLength; ) {
-            if (
-                keccak256(abi.encodePacked((multiStrategyName[i]))) ==
-                keccak256(abi.encodePacked((_name)))
-            ) {
+            if (keccak256(abi.encodePacked((multiStrategyName[i]))) == keccak256(abi.encodePacked((_name)))) {
                 exist = true;
                 break;
             }
@@ -634,10 +527,7 @@ contract MultiLogic is UpgradeableBase {
             }
         }
         require(exist == true, "M10");
-        return (
-            multiStrategyData[_name].logicContract,
-            multiStrategyData[_name].strategyContract
-        );
+        return (multiStrategyData[_name].logicContract, multiStrategyData[_name].strategyContract);
     }
 
     /**
@@ -655,7 +545,7 @@ contract MultiLogic is UpgradeableBase {
      * @param amount ETH amount (wei) to be sent
      */
     function _send(address payable _to, uint256 amount) private {
-        (bool sent, ) = _to.call{value: amount}("");
+        (bool sent, ) = _to.call{ value: amount }("");
         require(sent, "M8");
     }
 }

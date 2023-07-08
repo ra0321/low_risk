@@ -5,9 +5,9 @@ pragma abicoder v2;
 
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import "./utils/UpgradeableBase.sol";
-import "./interfaces/ISwap.sol";
-import "./interfaces/IMultiLogicProxy.sol";
-import "./interfaces/ILogicContract.sol";
+import "./Interfaces/ISwap.sol";
+import "./Interfaces/IMultiLogicProxy.sol";
+import "./Interfaces/ILogicContract.sol";
 
 abstract contract BaseLogic is ILogic, UpgradeableBase {
     using SafeERC20Upgradeable for IERC20Upgradeable;
@@ -89,11 +89,7 @@ abstract contract BaseLogic is ILogic, UpgradeableBase {
      * @param amount Amount of token
      * @param token Address of token
      */
-    function takeTokenFromStorage(uint256 amount, address token)
-        external
-        override
-        onlyOwnerAndAdmin
-    {
+    function takeTokenFromStorage(uint256 amount, address token) external override onlyOwnerAndAdmin {
         IMultiLogicProxy(multiLogicProxy).takeToken(amount, token);
         if (token == ZERO_ADDRESS) {
             require(address(this).balance >= amount, "E16");
@@ -105,11 +101,7 @@ abstract contract BaseLogic is ILogic, UpgradeableBase {
      * @param amount Amount of token
      * @param token Address of token
      */
-    function returnTokenToStorage(uint256 amount, address token)
-        external
-        override
-        onlyOwnerAndAdmin
-    {
+    function returnTokenToStorage(uint256 amount, address token) external override onlyOwnerAndAdmin {
         if (token == ZERO_ADDRESS) {
             _send(payable(multiLogicProxy), amount);
         }
@@ -121,11 +113,7 @@ abstract contract BaseLogic is ILogic, UpgradeableBase {
      * @notice Transfer amount of ETH from Logic to MultiLogicProxy
      * @param amount Amount of ETH
      */
-    function returnETHToMultiLogicProxy(uint256 amount)
-        external
-        override
-        onlyOwnerAndAdmin
-    {
+    function returnETHToMultiLogicProxy(uint256 amount) external override onlyOwnerAndAdmin {
         _send(payable(multiLogicProxy), amount);
     }
 
@@ -133,19 +121,9 @@ abstract contract BaseLogic is ILogic, UpgradeableBase {
      * @notice Distribution amount of blid to depositors.
      * @param amount Amount of BLID
      */
-    function addEarnToStorage(uint256 amount)
-        external
-        override
-        onlyOwnerAndAdmin
-    {
-        IERC20Upgradeable(blid).safeTransfer(
-            expenseAddress,
-            (amount * 3) / 100
-        );
-        IMultiLogicProxy(multiLogicProxy).addEarn(
-            amount - ((amount * 3) / 100),
-            blid
-        );
+    function addEarnToStorage(uint256 amount) external override onlyOwnerAndAdmin {
+        IERC20Upgradeable(blid).safeTransfer(expenseAddress, (amount * 3) / 100);
+        IMultiLogicProxy(multiLogicProxy).addEarn(amount - ((amount * 3) / 100), blid);
     }
 
     /**
@@ -153,10 +131,7 @@ abstract contract BaseLogic is ILogic, UpgradeableBase {
      * @param _swap Address of swapRouter
      * @param token Address of token
      */
-    function approveTokenForSwap(address _swap, address token)
-        public
-        onlyOwnerAndAdmin
-    {
+    function approveTokenForSwap(address _swap, address token) public onlyOwnerAndAdmin {
         if (IERC20Upgradeable(token).allowance(address(this), _swap) == 0) {
             IERC20Upgradeable(token).safeApprove(_swap, type(uint256).max);
         }
@@ -180,17 +155,11 @@ abstract contract BaseLogic is ILogic, UpgradeableBase {
         address[] memory path,
         bool isExactInput,
         uint256 deadline
-    )
-        external
-        payable
-        override
-        onlyOwnerAndAdmin
-        returns (uint256[] memory amounts)
-    {
+    ) external payable override onlyOwnerAndAdmin returns (uint256[] memory amounts) {
         if (path[0] == ZERO_ADDRESS) {
             require(address(this).balance >= amountIn, "E18");
 
-            amounts = ISwapGateway(swapGateway).swap{value: amountIn}(
+            amounts = ISwapGateway(swapGateway).swap{ value: amountIn }(
                 swapRouter,
                 amountIn,
                 amountOut,
@@ -199,17 +168,8 @@ abstract contract BaseLogic is ILogic, UpgradeableBase {
                 deadline
             );
         } else {
-            require(
-                IERC20Upgradeable(path[0]).balanceOf(address(this)) >= amountIn,
-                "E18"
-            );
-            require(
-                IERC20Upgradeable(path[0]).allowance(
-                    address(this),
-                    swapGateway
-                ) >= amountIn,
-                "E19"
-            );
+            require(IERC20Upgradeable(path[0]).balanceOf(address(this)) >= amountIn, "E18");
+            require(IERC20Upgradeable(path[0]).allowance(address(this), swapGateway) >= amountIn, "E19");
 
             amounts = ISwapGateway(swapGateway).swap(
                 swapRouter,
@@ -230,7 +190,7 @@ abstract contract BaseLogic is ILogic, UpgradeableBase {
      * @param amount ETH amount (wei) to be sent
      */
     function _send(address payable _to, uint256 amount) private {
-        (bool sent, ) = _to.call{value: amount}("");
+        (bool sent, ) = _to.call{ value: amount }("");
         require(sent, "E17");
     }
 }

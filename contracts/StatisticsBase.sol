@@ -8,20 +8,20 @@ import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20Metadat
 import "@openzeppelin/contracts-upgradeable/utils/math/SafeCastUpgradeable.sol";
 import "./utils/UpgradeableBase.sol";
 import "./libraries/SafeRatioMath.sol";
-import "./interfaces/IXToken.sol";
-import "./interfaces/ICompound.sol";
-import "./interfaces/ISwap.sol";
-import "./interfaces/AggregatorV3Interface.sol";
-import "./interfaces/IMultiLogicProxy.sol";
-import "./interfaces/ILogicContract.sol";
-import "./interfaces/IStrategyStatistics.sol";
+import "./Interfaces/IXToken.sol";
+import "./Interfaces/ICompound.sol";
+import "./Interfaces/ISwap.sol";
+import "./Interfaces/AggregatorV3Interface.sol";
+import "./Interfaces/IMultiLogicProxy.sol";
+import "./Interfaces/ILogicContract.sol";
+import "./Interfaces/IStrategyStatistics.sol";
 
 library StrategyStatisticsLib {
     using SafeRatioMath for uint256;
 
     uint256 private constant DAYS_PER_YEAR = 365;
     uint256 private constant DECIMALS = 18;
-    uint256 private constant BASE = 10**DECIMALS;
+    uint256 private constant BASE = 10 ** DECIMALS;
 
     /**
      * @notice Get Storage to Logic amount in USD
@@ -32,7 +32,10 @@ library StrategyStatisticsLib {
      * @return balanceUSD USD balance of strategy's logic
      * @return availableAmountUSD available USD amount from storage that strategy can take
      */
-    function getStorageAmount(address logic, PriceInfo[] memory priceUSDList)
+    function getStorageAmount(
+        address logic,
+        PriceInfo[] memory priceUSDList
+    )
         public
         view
         returns (
@@ -48,21 +51,16 @@ library StrategyStatisticsLib {
         availableAmountUSD = 0;
         address _multiLogicProxy = ILogic(logic).multiLogicProxy();
 
-        address[] memory usedTokens = IMultiLogicProxy(_multiLogicProxy)
-            .getUsedTokensStorage();
+        address[] memory usedTokens = IMultiLogicProxy(_multiLogicProxy).getUsedTokensStorage();
         for (uint256 index = 0; index < usedTokens.length; ) {
             takenAmountUSD +=
-                (IMultiLogicProxy(_multiLogicProxy).getTokenTaken(
-                    usedTokens[index],
-                    logic
-                ) * _findPriceUSD(usedTokens[index], priceUSDList)) /
+                (IMultiLogicProxy(_multiLogicProxy).getTokenTaken(usedTokens[index], logic) *
+                    _findPriceUSD(usedTokens[index], priceUSDList)) /
                 BASE;
 
             availableAmountUSD +=
-                (IMultiLogicProxy(_multiLogicProxy).getTokenAvailable(
-                    usedTokens[index],
-                    logic
-                ) * _findPriceUSD(usedTokens[index], priceUSDList)) /
+                (IMultiLogicProxy(_multiLogicProxy).getTokenAvailable(usedTokens[index], logic) *
+                    _findPriceUSD(usedTokens[index], priceUSDList)) /
                 BASE;
 
             balanceUSD +=
@@ -81,11 +79,10 @@ library StrategyStatisticsLib {
         strategyAmountUSD += takenAmountUSD - balanceUSD;
     }
 
-    function getApy(address _asset, bool isXToken)
-        public
-        view
-        returns (uint256 borrowApy, uint256 supplyApy)
-    {
+    function getApy(
+        address _asset,
+        bool isXToken
+    ) public view returns (uint256 borrowApy, uint256 supplyApy) {
         uint256 borrowRatePerBlock = IXToken(_asset).borrowRatePerBlock();
         borrowApy = _calcApy(_asset, borrowRatePerBlock);
 
@@ -116,19 +113,9 @@ library StrategyStatisticsLib {
             ).rpow(DAYS_PER_YEAR, BASE) - BASE;
     }
 
-    function _calcApy(address _asset, uint256 _ratePerBlock)
-        private
-        view
-        returns (uint256)
-    {
-        uint256 blocksPerYear = IInterestRateModel(
-            IXToken(_asset).interestRateModel()
-        ).blocksPerYear();
-        return
-            ((_ratePerBlock * blocksPerYear) / DAYS_PER_YEAR + BASE).rpow(
-                DAYS_PER_YEAR,
-                BASE
-            ) - BASE;
+    function _calcApy(address _asset, uint256 _ratePerBlock) private view returns (uint256) {
+        uint256 blocksPerYear = IInterestRateModel(IXToken(_asset).interestRateModel()).blocksPerYear();
+        return ((_ratePerBlock * blocksPerYear) / DAYS_PER_YEAR + BASE).rpow(DAYS_PER_YEAR, BASE) - BASE;
     }
 
     /**
@@ -137,11 +124,10 @@ library StrategyStatisticsLib {
      * @param priceUSDList list of price USD
      * @return priceUSD USD price of token
      */
-    function _findPriceUSD(address token, PriceInfo[] memory priceUSDList)
-        private
-        pure
-        returns (uint256 priceUSD)
-    {
+    function _findPriceUSD(
+        address token,
+        PriceInfo[] memory priceUSDList
+    ) private pure returns (uint256 priceUSD) {
         for (uint256 index = 0; index < priceUSDList.length; ) {
             if (priceUSDList[index].token == token) {
                 priceUSD = priceUSDList[index].priceUSD;
@@ -161,7 +147,7 @@ abstract contract StatisticsBase is UpgradeableBase, IStrategyStatistics {
 
     address internal constant ZERO_ADDRESS = address(0);
     uint256 internal constant DECIMALS = 18;
-    uint256 internal constant BASE = 10**DECIMALS;
+    uint256 internal constant BASE = 10 ** DECIMALS;
 
     address public blid;
     address public swapGateway;
@@ -232,16 +218,11 @@ abstract contract StatisticsBase is UpgradeableBase, IStrategyStatistics {
         return true;
     }
 
-    function getXTokenInfo(address _asset, address comptroller)
-        public
-        view
-        override
-        returns (XTokenAnalytics memory)
-    {
-        uint256 underlyingPriceUSD = _getUnderlyingUSDPrice(
-            _asset,
-            comptroller
-        );
+    function getXTokenInfo(
+        address _asset,
+        address comptroller
+    ) public view override returns (XTokenAnalytics memory) {
+        uint256 underlyingPriceUSD = _getUnderlyingUSDPrice(_asset, comptroller);
         address underlying = IXToken(_asset).underlying();
         uint256 underlyingDecimals = _isXNative(_asset)
             ? DECIMALS
@@ -250,41 +231,31 @@ abstract contract StatisticsBase is UpgradeableBase, IStrategyStatistics {
         uint256 totalSupply = IXToken(_asset).totalSupply();
         uint256 totalBorrows = IXToken(_asset).totalBorrows();
 
-        uint256 liquidity = (IXToken(_asset).getCash() * underlyingPriceUSD) /
-            BASE;
+        uint256 liquidity = (IXToken(_asset).getCash() * underlyingPriceUSD) / BASE;
 
-        (uint256 borrowApy, uint256 supplyApy) = StrategyStatisticsLib.getApy(
-            _asset,
-            isXToken(_asset)
-        );
+        (uint256 borrowApy, uint256 supplyApy) = StrategyStatisticsLib.getApy(_asset, isXToken(_asset));
 
         (uint256 borrowRewardsApy, uint256 supplyRewardsApy) = _getRewardsApy(
             _asset,
             comptroller,
-            underlyingPriceUSD / (10**(DECIMALS - underlyingDecimals)),
+            underlyingPriceUSD / (10 ** (DECIMALS - underlyingDecimals)),
             underlyingDecimals
         );
 
         return
             XTokenAnalytics({
                 symbol: IERC20MetadataUpgradeable(_asset).symbol(),
-                underlyingSymbol: _isXNative(_asset)
-                    ? ""
-                    : _getSymbol(underlying),
+                underlyingSymbol: _isXNative(_asset) ? "" : _getSymbol(underlying),
                 platformAddress: _asset,
                 underlyingAddress: underlying,
                 underlyingDecimals: underlyingDecimals,
-                underlyingPrice: underlyingPriceUSD /
-                    (10**(DECIMALS - underlyingDecimals)),
+                underlyingPrice: underlyingPriceUSD / (10 ** (DECIMALS - underlyingDecimals)),
                 totalSupply: totalSupply,
                 totalSupplyUSD: (totalSupply * underlyingPriceUSD) / BASE,
                 totalBorrows: totalBorrows,
                 totalBorrowsUSD: (totalBorrows * underlyingPriceUSD) / BASE,
                 liquidity: liquidity,
-                collateralFactor: _getCollateralFactorMantissa(
-                    _asset,
-                    comptroller
-                ),
+                collateralFactor: _getCollateralFactorMantissa(_asset, comptroller),
                 borrowApy: borrowApy,
                 supplyApy: supplyApy,
                 borrowRewardsApy: borrowRewardsApy,
@@ -292,12 +263,7 @@ abstract contract StatisticsBase is UpgradeableBase, IStrategyStatistics {
             });
     }
 
-    function getXTokensInfo(address comptroller)
-        public
-        view
-        override
-        returns (XTokenAnalytics[] memory)
-    {
+    function getXTokensInfo(address comptroller) public view override returns (XTokenAnalytics[] memory) {
         address[] memory xTokenList = _getAllMarkets(comptroller);
 
         uint256 len = xTokenList.length;
@@ -322,13 +288,9 @@ abstract contract StatisticsBase is UpgradeableBase, IStrategyStatistics {
      * check all xTokens in market
      * @param logic Logic contract address
      */
-    function getStrategyStatistics(address logic)
-        public
-        view
-        virtual
-        override
-        returns (StrategyStatistics memory statistics)
-    {
+    function getStrategyStatistics(
+        address logic
+    ) public view virtual override returns (StrategyStatistics memory statistics) {
         address comptroller = ILendingLogic(logic).comptroller();
 
         // xToken statistics
@@ -342,11 +304,7 @@ abstract contract StatisticsBase is UpgradeableBase, IStrategyStatistics {
         ) = _getXTokenStatistics(logic, comptroller);
 
         // Wallet Statistics
-        statistics.walletStatistics = _getWalletStatistics(
-            logic,
-            comptroller,
-            statistics.xTokensStatistics
-        );
+        statistics.walletStatistics = _getWalletStatistics(logic, comptroller, statistics.xTokensStatistics);
 
         // Get Lending rewards
         statistics.lendingEarnedUSD = _getStrategyEarned(logic, comptroller);
@@ -354,8 +312,7 @@ abstract contract StatisticsBase is UpgradeableBase, IStrategyStatistics {
         // Calculate borrow rate
         statistics.borrowRate = statistics.totalBorrowLimitUSD == 0
             ? 0
-            : (statistics.totalBorrowUSD * BASE) /
-                statistics.totalBorrowLimitUSD;
+            : (statistics.totalBorrowUSD * BASE) / statistics.totalBorrowLimitUSD;
 
         // ********** Get totalAmountUSD **********
 
@@ -363,9 +320,7 @@ abstract contract StatisticsBase is UpgradeableBase, IStrategyStatistics {
 
         // Wallet
         for (uint256 index = 0; index < statistics.walletStatistics.length; ) {
-            statistics.totalAmountUSD += (
-                statistics.walletStatistics[index].balanceUSD
-            ).toInt256();
+            statistics.totalAmountUSD += (statistics.walletStatistics[index].balanceUSD).toInt256();
 
             unchecked {
                 ++index;
@@ -380,25 +335,17 @@ abstract contract StatisticsBase is UpgradeableBase, IStrategyStatistics {
 
         // Storage to Logic
         uint256 takenAmountUSD;
-        (
-            ,
-            takenAmountUSD,
-            ,
-            statistics.storageAvailableUSD
-        ) = StrategyStatisticsLib.getStorageAmount(logic, priceUSDList);
+        (, takenAmountUSD, , statistics.storageAvailableUSD) = StrategyStatisticsLib.getStorageAmount(
+            logic,
+            priceUSDList
+        );
         statistics.totalAmountUSD -= (takenAmountUSD).toInt256();
     }
 
-    function getStrategyXTokenInfoCompact(address xToken, address logic)
-        public
-        view
-        override
-        returns (
-            uint256 totalSupply,
-            uint256 borrowLimit,
-            uint256 borrowAmount
-        )
-    {
+    function getStrategyXTokenInfoCompact(
+        address xToken,
+        address logic
+    ) public view override returns (uint256 totalSupply, uint256 borrowLimit, uint256 borrowAmount) {
         uint256 balance;
         uint256 mantissa;
         address comptroller = ILendingLogic(logic).comptroller();
@@ -406,9 +353,7 @@ abstract contract StatisticsBase is UpgradeableBase, IStrategyStatistics {
         (balance, borrowAmount, mantissa) = _getAccountSnapshot(xToken, logic);
 
         totalSupply = (balance * mantissa) / BASE;
-        borrowLimit =
-            (totalSupply * _getCollateralFactorMantissa(xToken, comptroller)) /
-            BASE;
+        borrowLimit = (totalSupply * _getCollateralFactorMantissa(xToken, comptroller)) / BASE;
     }
 
     /**
@@ -417,23 +362,20 @@ abstract contract StatisticsBase is UpgradeableBase, IStrategyStatistics {
      * @param logic logic address
      * @return tokenInfo XTokenInfo
      */
-    function getStrategyXTokenInfo(address xToken, address logic)
-        public
-        view
-        override
-        returns (XTokenInfo memory tokenInfo)
-    {
+    function getStrategyXTokenInfo(
+        address xToken,
+        address logic
+    ) public view override returns (XTokenInfo memory tokenInfo) {
         address comptroller = ILendingLogic(logic).comptroller();
 
         // Get USD price
         uint256 priceUSD = _getUnderlyingUSDPrice(xToken, comptroller);
 
         // Get TotalSupply, BorrowLimit, BorrowAmount
-        (
-            uint256 totalSupply,
-            uint256 borrowLimit,
-            uint256 borrowAmount
-        ) = getStrategyXTokenInfoCompact(xToken, logic);
+        (uint256 totalSupply, uint256 borrowLimit, uint256 borrowAmount) = getStrategyXTokenInfoCompact(
+            xToken,
+            logic
+        );
 
         // Get Underlying balance, Lending Amount
         address tokenUnderlying;
@@ -444,14 +386,13 @@ abstract contract StatisticsBase is UpgradeableBase, IStrategyStatistics {
             underlyingBalance = address(logic).balance;
         } else {
             tokenUnderlying = IXToken(xToken).underlying();
-            underlyingBalance = IERC20Upgradeable(tokenUnderlying).balanceOf(
-                logic
-            );
+            underlyingBalance = IERC20Upgradeable(tokenUnderlying).balanceOf(logic);
         }
 
-        uint256 lendingAmount = IMultiLogicProxy(
-            ILogic(logic).multiLogicProxy()
-        ).getTokenTaken(tokenUnderlying, logic);
+        uint256 lendingAmount = IMultiLogicProxy(ILogic(logic).multiLogicProxy()).getTokenTaken(
+            tokenUnderlying,
+            logic
+        );
         if (lendingAmount > underlyingBalance) {
             lendingAmount -= underlyingBalance;
         }
@@ -479,12 +420,10 @@ abstract contract StatisticsBase is UpgradeableBase, IStrategyStatistics {
      * @param rewardsToken Address of rewards token
      * @return priceUSD usd amount (decimal = 18 + (18 - decimal of rewards token))
      */
-    function getRewardsTokenPrice(address comptroller, address rewardsToken)
-        external
-        view
-        override
-        returns (uint256 priceUSD)
-    {
+    function getRewardsTokenPrice(
+        address comptroller,
+        address rewardsToken
+    ) external view override returns (uint256 priceUSD) {
         return _getRewardsTokenPrice(comptroller, rewardsToken);
     }
 
@@ -502,31 +441,14 @@ abstract contract StatisticsBase is UpgradeableBase, IStrategyStatistics {
         address comptroller,
         uint256 _underlyingPrice,
         uint256 _underlyingDecimals
-    )
-        private
-        view
-        returns (uint256 borrowRewardsApy, uint256 supplyRewardsApy)
-    {
-        uint256 distributionSupplySpeed = _getRewardsSupplySpeed(
-            _asset,
-            comptroller
-        );
+    ) private view returns (uint256 borrowRewardsApy, uint256 supplyRewardsApy) {
+        uint256 distributionSupplySpeed = _getRewardsSupplySpeed(_asset, comptroller);
         uint256 distributionSpeed = _getRewardsSpeed(_asset, comptroller);
-        uint256 totalSupply = IXToken(_asset).totalSupply() *
-            (10**(DECIMALS - _underlyingDecimals));
-        uint256 totalBorrows = IXToken(_asset).totalBorrows() *
-            (10**(DECIMALS - _underlyingDecimals));
-        uint256 rewardsPrice = _getRewardsTokenPrice(
-            comptroller,
-            _getRewardsToken(comptroller)
-        ) /
-            (10 **
-                (DECIMALS -
-                    IERC20MetadataUpgradeable(_getRewardsToken(comptroller))
-                        .decimals()));
-        uint256 blocksPerYear = IInterestRateModel(
-            IXToken(_asset).interestRateModel()
-        ).blocksPerYear();
+        uint256 totalSupply = IXToken(_asset).totalSupply() * (10 ** (DECIMALS - _underlyingDecimals));
+        uint256 totalBorrows = IXToken(_asset).totalBorrows() * (10 ** (DECIMALS - _underlyingDecimals));
+        uint256 rewardsPrice = _getRewardsTokenPrice(comptroller, _getRewardsToken(comptroller)) /
+            (10 ** (DECIMALS - IERC20MetadataUpgradeable(_getRewardsToken(comptroller)).decimals()));
+        uint256 blocksPerYear = IInterestRateModel(IXToken(_asset).interestRateModel()).blocksPerYear();
 
         borrowRewardsApy = StrategyStatisticsLib.calcRewardsApy(
             _underlyingPrice,
@@ -556,7 +478,10 @@ abstract contract StatisticsBase is UpgradeableBase, IStrategyStatistics {
      * @return totalBorrowUSD total borrow
      * @return totalBorrowLimitUSD total borrow limit
      */
-    function _getXTokenStatistics(address logic, address comptroller)
+    function _getXTokenStatistics(
+        address logic,
+        address comptroller
+    )
         private
         view
         returns (
@@ -578,10 +503,7 @@ abstract contract StatisticsBase is UpgradeableBase, IStrategyStatistics {
 
         for (uint256 index = 0; index < xTokenList.length; ) {
             // Get xTokenInfo
-            XTokenInfo memory tokenInfo = getStrategyXTokenInfo(
-                xTokenList[index],
-                logic
-            );
+            XTokenInfo memory tokenInfo = getStrategyXTokenInfo(xTokenList[index], logic);
 
             xTokensStatistics[index] = tokenInfo;
 
@@ -592,9 +514,7 @@ abstract contract StatisticsBase is UpgradeableBase, IStrategyStatistics {
 
             // Save PriceUSD
             priceUSDList[index] = PriceInfo(
-                _isXNative(xTokenList[index])
-                    ? ZERO_ADDRESS
-                    : IXToken(xTokenList[index]).underlying(),
+                _isXNative(xTokenList[index]) ? ZERO_ADDRESS : IXToken(xTokenList[index]).underlying(),
                 tokenInfo.priceUSD
             );
 
@@ -627,12 +547,8 @@ abstract contract StatisticsBase is UpgradeableBase, IStrategyStatistics {
             walletStatistics[index] = WalletInfo(
                 _isXNative(tokenInfo.xToken)
                     ? ""
-                    : IERC20MetadataUpgradeable(
-                        IXToken(tokenInfo.xToken).underlying()
-                    ).symbol(),
-                _isXNative(tokenInfo.xToken)
-                    ? ZERO_ADDRESS
-                    : IXToken(tokenInfo.xToken).underlying(),
+                    : IERC20MetadataUpgradeable(IXToken(tokenInfo.xToken).underlying()).symbol(),
+                _isXNative(tokenInfo.xToken) ? ZERO_ADDRESS : IXToken(tokenInfo.xToken).underlying(),
                 tokenInfo.underlyingBalance,
                 (tokenInfo.underlyingBalance * tokenInfo.priceUSD) / BASE
             );
@@ -649,14 +565,8 @@ abstract contract StatisticsBase is UpgradeableBase, IStrategyStatistics {
             blid,
             balance,
             _getAmountUSDByOracle(
-                pathToSwapBLIDToStableCoin[
-                    pathToSwapBLIDToStableCoin.length - 1
-                ],
-                ISwapGateway(swapGateway).quoteExactInput(
-                    swapRouterBlid,
-                    balance,
-                    pathToSwapBLIDToStableCoin
-                )
+                pathToSwapBLIDToStableCoin[pathToSwapBLIDToStableCoin.length - 1],
+                ISwapGateway(swapGateway).quoteExactInput(swapRouterBlid, balance, pathToSwapBLIDToStableCoin)
             )
         );
 
@@ -681,25 +591,15 @@ abstract contract StatisticsBase is UpgradeableBase, IStrategyStatistics {
      * @param amount token amount : decimal = token.decimals
      * @return amountUSD usd amount : decimal = 18
      */
-    function _getAmountUSDByOracle(address token, uint256 amount)
-        internal
-        view
-        returns (uint256 amountUSD)
-    {
+    function _getAmountUSDByOracle(address token, uint256 amount) internal view returns (uint256 amountUSD) {
         require(priceOracles[token] != ZERO_ADDRESS, "SB1");
 
-        AggregatorV3Interface oracle = AggregatorV3Interface(
-            priceOracles[token]
-        );
-        uint256 decimal = token == ZERO_ADDRESS
-            ? DECIMALS
-            : IERC20MetadataUpgradeable(token).decimals();
+        AggregatorV3Interface oracle = AggregatorV3Interface(priceOracles[token]);
+        uint256 decimal = token == ZERO_ADDRESS ? DECIMALS : IERC20MetadataUpgradeable(token).decimals();
 
         amountUSD =
-            (amount *
-                uint256(oracle.latestAnswer()) *
-                10**(DECIMALS - oracle.decimals())) /
-            10**decimal;
+            (amount * uint256(oracle.latestAnswer()) * 10 ** (DECIMALS - oracle.decimals())) /
+            10 ** decimal;
     }
 
     /*** Internal virtual function ***/
@@ -709,12 +609,7 @@ abstract contract StatisticsBase is UpgradeableBase, IStrategyStatistics {
      * @param xToken Address of xToken
      * @return isXNative true : xToken is for native token
      */
-    function _isXNative(address xToken)
-        internal
-        view
-        virtual
-        returns (bool isXNative)
-    {}
+    function _isXNative(address xToken) internal view virtual returns (bool isXNative) {}
 
     /**
      * @notice get USD price by Venus Oracle for xToken
@@ -722,12 +617,10 @@ abstract contract StatisticsBase is UpgradeableBase, IStrategyStatistics {
      * @param comptroller comptroller address
      * @return priceUSD USD price for xToken (decimal = 18 + (18 - decimal of underlying))
      */
-    function _getUnderlyingUSDPrice(address xToken, address comptroller)
-        internal
-        view
-        virtual
-        returns (uint256 priceUSD)
-    {}
+    function _getUnderlyingUSDPrice(
+        address xToken,
+        address comptroller
+    ) internal view virtual returns (uint256 priceUSD) {}
 
     /**
      * @notice Get strategy earned
@@ -735,36 +628,27 @@ abstract contract StatisticsBase is UpgradeableBase, IStrategyStatistics {
      * @param comptroller comptroller address
      * @return strategyEarned
      */
-    function _getStrategyEarned(address logic, address comptroller)
-        internal
-        view
-        virtual
-        returns (uint256 strategyEarned)
-    {}
+    function _getStrategyEarned(
+        address logic,
+        address comptroller
+    ) internal view virtual returns (uint256 strategyEarned) {}
 
     /**
      * @notice get collateralFactorMantissa of startegy
      * @param comptroller comptroller address
      * @return collateralFactorMantissa collateralFactorMantissa
      */
-    function _getCollateralFactorMantissa(address xToken, address comptroller)
-        internal
-        view
-        virtual
-        returns (uint256 collateralFactorMantissa)
-    {}
+    function _getCollateralFactorMantissa(
+        address xToken,
+        address comptroller
+    ) internal view virtual returns (uint256 collateralFactorMantissa) {}
 
     /**
      * @notice get rewards underlying token of startegy
      * @param comptroller comptroller address
      * @return rewardsToken token address
      */
-    function _getRewardsToken(address comptroller)
-        internal
-        view
-        virtual
-        returns (address rewardsToken)
-    {}
+    function _getRewardsToken(address comptroller) internal view virtual returns (address rewardsToken) {}
 
     /**
      * @notice get rewards underlying token price
@@ -772,50 +656,36 @@ abstract contract StatisticsBase is UpgradeableBase, IStrategyStatistics {
      * @param rewardsToken Address of rewards token
      * @return priceUSD usd amount (decimal = 18 + (18 - decimal of rewards token))
      */
-    function _getRewardsTokenPrice(address comptroller, address rewardsToken)
-        internal
-        view
-        virtual
-        returns (uint256 priceUSD)
-    {}
+    function _getRewardsTokenPrice(
+        address comptroller,
+        address rewardsToken
+    ) internal view virtual returns (uint256 priceUSD) {}
 
     /**
      * @notice get rewardsSpeed
      * @param _asset Address of asset
      * @param comptroller comptroller address
      */
-    function _getRewardsSpeed(address _asset, address comptroller)
-        internal
-        view
-        virtual
-        returns (uint256)
-    {}
+    function _getRewardsSpeed(address _asset, address comptroller) internal view virtual returns (uint256) {}
 
     /**
      * @notice get rewardsSupplySpeed
      * @param _asset Address of asset
      * @param comptroller comptroller address
      */
-    function _getRewardsSupplySpeed(address _asset, address comptroller)
-        internal
-        view
-        virtual
-        returns (uint256)
-    {}
+    function _getRewardsSupplySpeed(
+        address _asset,
+        address comptroller
+    ) internal view virtual returns (uint256) {}
 
-    function getAllMarkets(address comptroller)
-        public
-        view
-        returns (address[] memory)
-    {
+    function getAllMarkets(address comptroller) public view returns (address[] memory) {
         return _getAllMarkets(comptroller);
     }
 
-    function getEnteredMarkets(address comptroller, address logic)
-        public
-        view
-        returns (address[] memory markets)
-    {
+    function getEnteredMarkets(
+        address comptroller,
+        address logic
+    ) public view returns (address[] memory markets) {
         uint256 len;
 
         address[] memory allMarkets = getAllMarkets(comptroller);
@@ -848,27 +718,15 @@ abstract contract StatisticsBase is UpgradeableBase, IStrategyStatistics {
     /**
      * @notice Get all entered xTokens to comptroller
      */
-    function _getAllMarkets(address comptroller)
-        internal
-        view
-        virtual
-        returns (address[] memory)
-    {
+    function _getAllMarkets(address comptroller) internal view virtual returns (address[] memory) {
         return IComptrollerCompound(comptroller).getAllMarkets();
     }
 
-    function _getAccountSnapshot(address xToken, address logic)
-        internal
-        view
-        virtual
-        returns (
-            uint256 balance,
-            uint256 borrowAmount,
-            uint256 mantissa
-        )
-    {
-        (, balance, borrowAmount, mantissa) = IXToken(xToken)
-            .getAccountSnapshot(logic);
+    function _getAccountSnapshot(
+        address xToken,
+        address logic
+    ) internal view virtual returns (uint256 balance, uint256 borrowAmount, uint256 mantissa) {
+        (, balance, borrowAmount, mantissa) = IXToken(xToken).getAccountSnapshot(logic);
     }
 
     /**

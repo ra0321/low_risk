@@ -7,15 +7,15 @@ import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeab
 import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20MetadataUpgradeable.sol";
 import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 import "./utils/UpgradeableBase.sol";
-import "./interfaces/ISwap.sol";
-import "./interfaces/IUniswapV3.sol";
-import "./interfaces/IDODOSwap.sol";
-import "./interfaces/IWETH.sol";
-import "./interfaces/IAlgebra.sol";
+import "./Interfaces/ISwap.sol";
+import "./Interfaces/IUniswapV3.sol";
+import "./Interfaces/IDODOSwap.sol";
+import "./Interfaces/IWETH.sol";
+import "./Interfaces/IAlgebra.sol";
 
 library SwapGatewayLib {
     using SafeERC20Upgradeable for IERC20Upgradeable;
-    uint256 private constant BASE = 10**18;
+    uint256 private constant BASE = 10 ** 18;
     address private constant ZERO_ADDRESS = address(0);
 
     /**
@@ -44,11 +44,7 @@ library SwapGatewayLib {
      * @notice Generate abi.encodePacked path for QuickswapV3 multihop swap
      * @param tokens list of tokens
      */
-    function generateEncodedPath(address[] memory tokens)
-        public
-        pure
-        returns (bytes memory)
-    {
+    function generateEncodedPath(address[] memory tokens) public pure returns (bytes memory) {
         bytes memory path = new bytes(0);
 
         for (uint256 i = 0; i < tokens.length; i++) {
@@ -72,20 +68,12 @@ library SwapGatewayLib {
         address tokenOut
     ) public view returns (uint256 amountOut) {
         // Find Pool
-        (address uniswapV3Pool, ) = _findUniswapV3Pool(
-            swapRouter,
-            tokenIn,
-            tokenOut
-        );
+        (address uniswapV3Pool, ) = _findUniswapV3Pool(swapRouter, tokenIn, tokenOut);
 
         // Calulate Quote
         Slot0 memory slot0 = IUniswapV3Pool(uniswapV3Pool).slot0();
 
-        amountOut = _calcUniswapV3Quote(
-            tokenIn,
-            IUniswapV3Pool(uniswapV3Pool).token0(),
-            slot0.sqrtPriceX96
-        );
+        amountOut = _calcUniswapV3Quote(tokenIn, IUniswapV3Pool(uniswapV3Pool).token0(), slot0.sqrtPriceX96);
     }
 
     /**
@@ -107,11 +95,7 @@ library SwapGatewayLib {
         // Calulate Quote
         (uint160 price, , , , , , ) = IQuickswapV3Pool(pool).globalState();
 
-        amountOut = _calcUniswapV3Quote(
-            tokenIn,
-            IQuickswapV3Pool(pool).token0(),
-            price
-        );
+        amountOut = _calcUniswapV3Quote(tokenIn, IQuickswapV3Pool(pool).token0(), price);
     }
 
     /**
@@ -127,16 +111,16 @@ library SwapGatewayLib {
         uint160 price
     ) private pure returns (uint256 amountOut) {
         if (tokenIn == baseToken) {
-            if (price > 10**29) {
-                amountOut = ((price * 10**9) / 2**96)**2;
+            if (price > 10 ** 29) {
+                amountOut = ((price * 10 ** 9) / 2 ** 96) ** 2;
             } else {
-                amountOut = (uint256(price)**2 * BASE) / (2**192);
+                amountOut = (uint256(price) ** 2 * BASE) / (2 ** 192);
             }
         } else {
-            if (price > 10**35) {
-                amountOut = ((2**96 * 10**9) / (price))**2;
+            if (price > 10 ** 35) {
+                amountOut = ((2 ** 96 * 10 ** 9) / (price)) ** 2;
             } else {
-                amountOut = (2**192 * BASE) / (uint256(price)**2);
+                amountOut = (2 ** 192 * BASE) / (uint256(price) ** 2);
             }
         }
     }
@@ -162,9 +146,11 @@ library SwapGatewayLib {
         fees[4] = 10000;
 
         for (uint8 i = 0; i < 5; ) {
-            pool = IUniswapV3Factory(
-                IUniswapV3Router(uniswapV3Router).factory()
-            ).getPool(tokenA, tokenB, fees[i]);
+            pool = IUniswapV3Factory(IUniswapV3Router(uniswapV3Router).factory()).getPool(
+                tokenA,
+                tokenB,
+                fees[i]
+            );
             if (pool != ZERO_ADDRESS) {
                 fee = fees[i];
                 break;
@@ -190,9 +176,10 @@ library SwapGatewayLib {
         address tokenA,
         address tokenB
     ) public view returns (address pool, uint24 fee) {
-        pool = IQuickswapV3Factory(
-            IQuickswapV3Router(quickswapV3Router).factory()
-        ).poolByPair(tokenA, tokenB);
+        pool = IQuickswapV3Factory(IQuickswapV3Router(quickswapV3Router).factory()).poolByPair(
+            tokenA,
+            tokenB
+        );
 
         if (pool != ZERO_ADDRESS) {
             (, , uint16 fee16, , , , ) = IQuickswapV3Pool(pool).globalState();
@@ -207,7 +194,7 @@ contract SwapGateway is ISwapGateway, UpgradeableBase {
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
     address private constant ZERO_ADDRESS = address(0);
-    uint256 private constant BASE = 10**18;
+    uint256 private constant BASE = 10 ** 18;
     address private wETH;
 
     // 0: unregistered
@@ -246,10 +233,7 @@ contract SwapGateway is ISwapGateway, UpgradeableBase {
      * @param swapRouter Address of swapRouter
      * @param version version of swapRouter (2, 3)
      */
-    function addSwapRouter(address swapRouter, uint8 version)
-        external
-        onlyOwnerAndAdmin
-    {
+    function addSwapRouter(address swapRouter, uint8 version) external onlyOwnerAndAdmin {
         require(swapRouter != ZERO_ADDRESS, "SG8");
         require(version > 0, "SG4");
 
@@ -288,73 +272,23 @@ contract SwapGateway is ISwapGateway, UpgradeableBase {
 
         if (version == 2) {
             if (isExactInput) {
-                return
-                    _swapV2ExactIn(
-                        swapRouter,
-                        amountIn,
-                        amountOut,
-                        path,
-                        deadline
-                    );
+                return _swapV2ExactIn(swapRouter, amountIn, amountOut, path, deadline);
             } else {
-                return
-                    _swapV2ExactOut(
-                        swapRouter,
-                        amountOut,
-                        amountIn,
-                        path,
-                        deadline
-                    );
+                return _swapV2ExactOut(swapRouter, amountOut, amountIn, path, deadline);
             }
         } else if (version == 3) {
             if (isExactInput) {
-                return
-                    _swapV3ExactIn(
-                        swapRouter,
-                        amountIn,
-                        amountOut,
-                        path,
-                        deadline
-                    );
+                return _swapV3ExactIn(swapRouter, amountIn, amountOut, path, deadline);
             } else {
-                return
-                    _swapV3ExactOut(
-                        swapRouter,
-                        amountOut,
-                        amountIn,
-                        path,
-                        deadline
-                    );
+                return _swapV3ExactOut(swapRouter, amountOut, amountIn, path, deadline);
             }
         } else if (version == 4) {
-            return
-                _swapDODOV2(
-                    swapRouter,
-                    amountIn,
-                    amountOut,
-                    path,
-                    isExactInput,
-                    deadline
-                );
+            return _swapDODOV2(swapRouter, amountIn, amountOut, path, isExactInput, deadline);
         } else if (version == 5) {
             if (isExactInput) {
-                return
-                    _swapV5ExactIn(
-                        swapRouter,
-                        amountIn,
-                        amountOut,
-                        path,
-                        deadline
-                    );
+                return _swapV5ExactIn(swapRouter, amountIn, amountOut, path, deadline);
             } else {
-                return
-                    _swapV5ExactOut(
-                        swapRouter,
-                        amountOut,
-                        amountIn,
-                        path,
-                        deadline
-                    );
+                return _swapV5ExactOut(swapRouter, amountOut, amountIn, path, deadline);
             }
         } else {
             revert("SG6");
@@ -387,20 +321,14 @@ contract SwapGateway is ISwapGateway, UpgradeableBase {
             }
 
             if (version == 2) {
-                uint256[] memory amountOutList = IPancakeRouter01(swapRouter)
-                    .getAmountsOut(amountIn, path);
+                uint256[] memory amountOutList = IPancakeRouter01(swapRouter).getAmountsOut(amountIn, path);
 
                 amountOut = amountOutList[amountOutList.length - 1];
             } else if (version == 3) {
                 amountOut = amountIn;
                 for (i = 0; i < path.length - 1; ) {
                     amountOut =
-                        (amountOut *
-                            SwapGatewayLib.getUniswapV3Quote(
-                                swapRouter,
-                                path[i],
-                                path[i + 1]
-                            )) /
+                        (amountOut * SwapGatewayLib.getUniswapV3Quote(swapRouter, path[i], path[i + 1])) /
                         BASE;
 
                     unchecked {
@@ -417,16 +345,10 @@ contract SwapGateway is ISwapGateway, UpgradeableBase {
                 for (i = 1; i < path.length; ) {
                     address pool = path[i];
                     if (tokenIn == IDODOStorage(pool)._BASE_TOKEN_()) {
-                        (amountOut, ) = IDODOStorage(pool).querySellBase(
-                            tx.origin,
-                            amountOut
-                        );
+                        (amountOut, ) = IDODOStorage(pool).querySellBase(tx.origin, amountOut);
                         tokenIn = IDODOStorage(pool)._QUOTE_TOKEN_();
                     } else if (tokenIn == IDODOStorage(pool)._QUOTE_TOKEN_()) {
-                        (amountOut, ) = IDODOStorage(pool).querySellQuote(
-                            tx.origin,
-                            amountOut
-                        );
+                        (amountOut, ) = IDODOStorage(pool).querySellQuote(tx.origin, amountOut);
                         tokenIn = IDODOStorage(pool)._BASE_TOKEN_();
                     } else {
                         revert("SG6");
@@ -440,12 +362,7 @@ contract SwapGateway is ISwapGateway, UpgradeableBase {
                 amountOut = amountIn;
                 for (i = 0; i < path.length - 1; ) {
                     amountOut =
-                        (amountOut *
-                            SwapGatewayLib.getQuickswapV3Quote(
-                                swapRouter,
-                                path[i],
-                                path[i + 1]
-                            )) /
+                        (amountOut * SwapGatewayLib.getQuickswapV3Quote(swapRouter, path[i], path[i + 1])) /
                         BASE;
 
                     unchecked {
@@ -481,8 +398,7 @@ contract SwapGateway is ISwapGateway, UpgradeableBase {
         }
 
         if (version == 2) {
-            uint256[] memory amountInList = IPancakeRouter01(swapRouter)
-                .getAmountsIn(amountOut, path);
+            uint256[] memory amountInList = IPancakeRouter01(swapRouter).getAmountsIn(amountOut, path);
 
             amountIn = amountInList[0];
         }
@@ -513,9 +429,12 @@ contract SwapGateway is ISwapGateway, UpgradeableBase {
         if (path[0] == _wETH) {
             require(msg.value >= amountIn, "SG0");
 
-            amounts = IPancakeRouter01(swapRouter).swapExactETHForTokens{
-                value: amountIn
-            }(amountOutMin, path, msg.sender, deadline);
+            amounts = IPancakeRouter01(swapRouter).swapExactETHForTokens{ value: amountIn }(
+                amountOutMin,
+                path,
+                msg.sender,
+                deadline
+            );
 
             // If too mucn ETH has been sent, send it back to sender
             uint256 remainedToken = msg.value - amountIn;
@@ -526,11 +445,7 @@ contract SwapGateway is ISwapGateway, UpgradeableBase {
             return amounts;
         }
 
-        IERC20Upgradeable(path[0]).safeTransferFrom(
-            msg.sender,
-            address(this),
-            amountIn
-        );
+        IERC20Upgradeable(path[0]).safeTransferFrom(msg.sender, address(this), amountIn);
         _approveTokenForSwapRouter(path[0], swapRouter, amountIn);
 
         // swapExactTokensForETH
@@ -580,9 +495,12 @@ contract SwapGateway is ISwapGateway, UpgradeableBase {
         if (path[0] == _wETH) {
             require(msg.value >= amountInMax, "SG0");
 
-            amounts = IPancakeRouter01(swapRouter).swapETHForExactTokens{
-                value: amountInMax
-            }(amountOut, path, msg.sender, deadline);
+            amounts = IPancakeRouter01(swapRouter).swapETHForExactTokens{ value: amountInMax }(
+                amountOut,
+                path,
+                msg.sender,
+                deadline
+            );
 
             remainedToken = address(this).balance;
             if (remainedToken > 0) {
@@ -592,11 +510,7 @@ contract SwapGateway is ISwapGateway, UpgradeableBase {
             return amounts;
         }
 
-        IERC20Upgradeable(path[0]).safeTransferFrom(
-            msg.sender,
-            address(this),
-            amountInMax
-        );
+        IERC20Upgradeable(path[0]).safeTransferFrom(msg.sender, address(this), amountInMax);
         _approveTokenForSwapRouter(path[0], swapRouter, amountInMax);
 
         // swapTokensForExactETH
@@ -650,11 +564,7 @@ contract SwapGateway is ISwapGateway, UpgradeableBase {
         if (path[0] == _wETH) {
             require(msg.value >= amountIn, "SG0");
         } else {
-            IERC20Upgradeable(path[0]).safeTransferFrom(
-                msg.sender,
-                address(this),
-                amountIn
-            );
+            IERC20Upgradeable(path[0]).safeTransferFrom(msg.sender, address(this), amountIn);
             _approveTokenForSwapRouter(path[0], swapRouter, amountIn);
         }
 
@@ -665,28 +575,21 @@ contract SwapGateway is ISwapGateway, UpgradeableBase {
         // Single
         if (length == 2) {
             // Check pool and fee
-            (, uint24 fee) = SwapGatewayLib._findUniswapV3Pool(
-                swapRouter,
-                path[0],
-                path[1]
-            );
+            (, uint24 fee) = SwapGatewayLib._findUniswapV3Pool(swapRouter, path[0], path[1]);
 
-            ISwapRouter.ExactInputSingleParams memory params = ISwapRouter
-                .ExactInputSingleParams({
-                    tokenIn: path[0],
-                    tokenOut: path[1],
-                    fee: fee,
-                    recipient: recipient,
-                    deadline: deadline,
-                    amountIn: amountIn,
-                    amountOutMinimum: amountOutMin,
-                    sqrtPriceLimitX96: 0
-                });
+            ISwapRouter.ExactInputSingleParams memory params = ISwapRouter.ExactInputSingleParams({
+                tokenIn: path[0],
+                tokenOut: path[1],
+                fee: fee,
+                recipient: recipient,
+                deadline: deadline,
+                amountIn: amountIn,
+                amountOutMinimum: amountOutMin,
+                sqrtPriceLimitX96: 0
+            });
 
             if (path[0] == _wETH) {
-                amounts[0] = ISwapRouter(swapRouter).exactInputSingle{
-                    value: amountIn
-                }(params);
+                amounts[0] = ISwapRouter(swapRouter).exactInputSingle{ value: amountIn }(params);
 
                 // If too much ETH has been sent, send it back to sender
                 uint256 remainedToken = msg.value - amountIn;
@@ -702,30 +605,23 @@ contract SwapGateway is ISwapGateway, UpgradeableBase {
 
             for (uint256 i = 0; i < length - 1; ) {
                 // Get fee
-                (, fees[i]) = SwapGatewayLib._findUniswapV3Pool(
-                    swapRouter,
-                    path[i],
-                    path[i + 1]
-                );
+                (, fees[i]) = SwapGatewayLib._findUniswapV3Pool(swapRouter, path[i], path[i + 1]);
 
                 unchecked {
                     ++i;
                 }
             }
 
-            ISwapRouter.ExactInputParams memory params = ISwapRouter
-                .ExactInputParams({
-                    path: SwapGatewayLib.generateEncodedPathWithFee(path, fees),
-                    recipient: recipient,
-                    deadline: deadline,
-                    amountIn: amountIn,
-                    amountOutMinimum: amountOutMin
-                });
+            ISwapRouter.ExactInputParams memory params = ISwapRouter.ExactInputParams({
+                path: SwapGatewayLib.generateEncodedPathWithFee(path, fees),
+                recipient: recipient,
+                deadline: deadline,
+                amountIn: amountIn,
+                amountOutMinimum: amountOutMin
+            });
 
             if (path[0] == _wETH) {
-                amounts[0] = ISwapRouter(swapRouter).exactInput{
-                    value: amountIn
-                }(params);
+                amounts[0] = ISwapRouter(swapRouter).exactInput{ value: amountIn }(params);
             } else {
                 amounts[0] = ISwapRouter(swapRouter).exactInput(params);
             }
@@ -741,9 +637,7 @@ contract SwapGateway is ISwapGateway, UpgradeableBase {
 
         // If receive ETH, unWrap it
         if (path[length - 1] == _wETH) {
-            IWETH(_wETH).withdraw(
-                IERC20Upgradeable(_wETH).balanceOf(address(this))
-            );
+            IWETH(_wETH).withdraw(IERC20Upgradeable(_wETH).balanceOf(address(this)));
             _send(payable(msg.sender), address(this).balance);
         }
     }
@@ -772,11 +666,7 @@ contract SwapGateway is ISwapGateway, UpgradeableBase {
         if (path[0] == _wETH) {
             require(msg.value >= amountInMax, "SG0");
         } else {
-            IERC20Upgradeable(path[0]).safeTransferFrom(
-                msg.sender,
-                address(this),
-                amountInMax
-            );
+            IERC20Upgradeable(path[0]).safeTransferFrom(msg.sender, address(this), amountInMax);
             _approveTokenForSwapRouter(path[0], swapRouter, amountInMax);
         }
 
@@ -787,28 +677,21 @@ contract SwapGateway is ISwapGateway, UpgradeableBase {
         // Single Swap
         if (length == 2) {
             // Check pool and fee
-            (, uint24 fee) = SwapGatewayLib._findUniswapV3Pool(
-                swapRouter,
-                path[0],
-                path[1]
-            );
+            (, uint24 fee) = SwapGatewayLib._findUniswapV3Pool(swapRouter, path[0], path[1]);
 
-            ISwapRouter.ExactOutputSingleParams memory params = ISwapRouter
-                .ExactOutputSingleParams({
-                    tokenIn: path[0],
-                    tokenOut: path[1],
-                    fee: fee,
-                    recipient: recipient,
-                    deadline: deadline,
-                    amountOut: amountOut,
-                    amountInMaximum: amountInMax,
-                    sqrtPriceLimitX96: 0
-                });
+            ISwapRouter.ExactOutputSingleParams memory params = ISwapRouter.ExactOutputSingleParams({
+                tokenIn: path[0],
+                tokenOut: path[1],
+                fee: fee,
+                recipient: recipient,
+                deadline: deadline,
+                amountOut: amountOut,
+                amountInMaximum: amountInMax,
+                sqrtPriceLimitX96: 0
+            });
 
             if (path[0] == _wETH) {
-                amounts[0] = ISwapRouter(swapRouter).exactOutputSingle{
-                    value: amountInMax
-                }(params);
+                amounts[0] = ISwapRouter(swapRouter).exactOutputSingle{ value: amountInMax }(params);
             } else {
                 amounts[0] = ISwapRouter(swapRouter).exactOutputSingle(params);
             }
@@ -839,22 +722,16 @@ contract SwapGateway is ISwapGateway, UpgradeableBase {
                 }
             }
 
-            ISwapRouter.ExactOutputParams memory params = ISwapRouter
-                .ExactOutputParams({
-                    path: SwapGatewayLib.generateEncodedPathWithFee(
-                        reversePath,
-                        fees
-                    ),
-                    recipient: recipient,
-                    deadline: deadline,
-                    amountOut: amountOut,
-                    amountInMaximum: amountInMax
-                });
+            ISwapRouter.ExactOutputParams memory params = ISwapRouter.ExactOutputParams({
+                path: SwapGatewayLib.generateEncodedPathWithFee(reversePath, fees),
+                recipient: recipient,
+                deadline: deadline,
+                amountOut: amountOut,
+                amountInMaximum: amountInMax
+            });
 
             if (path[0] == _wETH) {
-                amounts[0] = ISwapRouter(swapRouter).exactOutput{
-                    value: amountInMax
-                }(params);
+                amounts[0] = ISwapRouter(swapRouter).exactOutput{ value: amountInMax }(params);
             } else {
                 amounts[0] = ISwapRouter(swapRouter).exactOutput(params);
             }
@@ -870,18 +747,13 @@ contract SwapGateway is ISwapGateway, UpgradeableBase {
         } else {
             remainedToken = IERC20Upgradeable(path[0]).balanceOf(address(this));
             if (remainedToken > 0) {
-                IERC20Upgradeable(path[0]).safeTransfer(
-                    msg.sender,
-                    remainedToken
-                );
+                IERC20Upgradeable(path[0]).safeTransfer(msg.sender, remainedToken);
             }
         }
 
         // If receive ETH, unWrap it
         if (path[length - 1] == _wETH) {
-            IWETH(_wETH).withdraw(
-                IERC20Upgradeable(_wETH).balanceOf(address(this))
-            );
+            IWETH(_wETH).withdraw(IERC20Upgradeable(_wETH).balanceOf(address(this)));
             _send(payable(msg.sender), address(this).balance);
         }
     }
@@ -909,11 +781,7 @@ contract SwapGateway is ISwapGateway, UpgradeableBase {
         if (path[0] == _wETH) {
             require(msg.value >= amountIn, "SG0");
         } else {
-            IERC20Upgradeable(path[0]).safeTransferFrom(
-                msg.sender,
-                address(this),
-                amountIn
-            );
+            IERC20Upgradeable(path[0]).safeTransferFrom(msg.sender, address(this), amountIn);
             _approveTokenForSwapRouter(path[0], swapRouter, amountIn);
         }
 
@@ -926,8 +794,8 @@ contract SwapGateway is ISwapGateway, UpgradeableBase {
             // Check pool and fee
             SwapGatewayLib._findQuickswapV3Pool(swapRouter, path[0], path[1]);
 
-            IAlgebraSwapRouter.ExactInputSingleParams
-                memory params = IAlgebraSwapRouter.ExactInputSingleParams({
+            IAlgebraSwapRouter.ExactInputSingleParams memory params = IAlgebraSwapRouter
+                .ExactInputSingleParams({
                     tokenIn: path[0],
                     tokenOut: path[1],
                     recipient: recipient,
@@ -938,9 +806,7 @@ contract SwapGateway is ISwapGateway, UpgradeableBase {
                 });
 
             if (path[0] == _wETH) {
-                amounts[0] = IAlgebraSwapRouter(swapRouter).exactInputSingle{
-                    value: amountIn
-                }(params);
+                amounts[0] = IAlgebraSwapRouter(swapRouter).exactInputSingle{ value: amountIn }(params);
 
                 // If too much ETH has been sent, send it back to sender
                 uint256 remainedToken = msg.value - amountIn;
@@ -948,38 +814,29 @@ contract SwapGateway is ISwapGateway, UpgradeableBase {
                     _send(payable(msg.sender), remainedToken);
                 }
             } else {
-                amounts[0] = IAlgebraSwapRouter(swapRouter).exactInputSingle(
-                    params
-                );
+                amounts[0] = IAlgebraSwapRouter(swapRouter).exactInputSingle(params);
             }
         } else {
             // Multihop
             // Check pool and fee
             for (uint256 i = 0; i < length - 1; ) {
-                SwapGatewayLib._findQuickswapV3Pool(
-                    swapRouter,
-                    path[i],
-                    path[i + 1]
-                );
+                SwapGatewayLib._findQuickswapV3Pool(swapRouter, path[i], path[i + 1]);
 
                 unchecked {
                     ++i;
                 }
             }
 
-            IAlgebraSwapRouter.ExactInputParams
-                memory params = IAlgebraSwapRouter.ExactInputParams({
-                    path: SwapGatewayLib.generateEncodedPath(path),
-                    recipient: recipient,
-                    deadline: deadline,
-                    amountIn: amountIn,
-                    amountOutMinimum: amountOutMin
-                });
+            IAlgebraSwapRouter.ExactInputParams memory params = IAlgebraSwapRouter.ExactInputParams({
+                path: SwapGatewayLib.generateEncodedPath(path),
+                recipient: recipient,
+                deadline: deadline,
+                amountIn: amountIn,
+                amountOutMinimum: amountOutMin
+            });
 
             if (path[0] == _wETH) {
-                amounts[0] = IAlgebraSwapRouter(swapRouter).exactInput{
-                    value: amountIn
-                }(params);
+                amounts[0] = IAlgebraSwapRouter(swapRouter).exactInput{ value: amountIn }(params);
             } else {
                 amounts[0] = IAlgebraSwapRouter(swapRouter).exactInput(params);
             }
@@ -995,9 +852,7 @@ contract SwapGateway is ISwapGateway, UpgradeableBase {
 
         // If receive ETH, unWrap it
         if (path[length - 1] == _wETH) {
-            IWETH(_wETH).withdraw(
-                IERC20Upgradeable(_wETH).balanceOf(address(this))
-            );
+            IWETH(_wETH).withdraw(IERC20Upgradeable(_wETH).balanceOf(address(this)));
             _send(payable(msg.sender), address(this).balance);
         }
     }
@@ -1026,11 +881,7 @@ contract SwapGateway is ISwapGateway, UpgradeableBase {
         if (path[0] == _wETH) {
             require(msg.value >= amountInMax, "SG0");
         } else {
-            IERC20Upgradeable(path[0]).safeTransferFrom(
-                msg.sender,
-                address(this),
-                amountInMax
-            );
+            IERC20Upgradeable(path[0]).safeTransferFrom(msg.sender, address(this), amountInMax);
             _approveTokenForSwapRouter(path[0], swapRouter, amountInMax);
         }
 
@@ -1041,14 +892,10 @@ contract SwapGateway is ISwapGateway, UpgradeableBase {
         // Single Swap
         if (length == 2) {
             // Check pool and fee
-            (, uint24 fee) = SwapGatewayLib._findQuickswapV3Pool(
-                swapRouter,
-                path[0],
-                path[1]
-            );
+            (, uint24 fee) = SwapGatewayLib._findQuickswapV3Pool(swapRouter, path[0], path[1]);
 
-            IAlgebraSwapRouter.ExactOutputSingleParams
-                memory params = IAlgebraSwapRouter.ExactOutputSingleParams({
+            IAlgebraSwapRouter.ExactOutputSingleParams memory params = IAlgebraSwapRouter
+                .ExactOutputSingleParams({
                     tokenIn: path[0],
                     tokenOut: path[1],
                     fee: fee,
@@ -1060,13 +907,9 @@ contract SwapGateway is ISwapGateway, UpgradeableBase {
                 });
 
             if (path[0] == _wETH) {
-                amounts[0] = IAlgebraSwapRouter(swapRouter).exactOutputSingle{
-                    value: amountInMax
-                }(params);
+                amounts[0] = IAlgebraSwapRouter(swapRouter).exactOutputSingle{ value: amountInMax }(params);
             } else {
-                amounts[0] = IAlgebraSwapRouter(swapRouter).exactOutputSingle(
-                    params
-                );
+                amounts[0] = IAlgebraSwapRouter(swapRouter).exactOutputSingle(params);
             }
         } else {
             // Multihop
@@ -1083,30 +926,23 @@ contract SwapGateway is ISwapGateway, UpgradeableBase {
 
             // Check pool, fee
             for (uint256 i = 0; i < length - 1; ) {
-                SwapGatewayLib._findQuickswapV3Pool(
-                    swapRouter,
-                    reversePath[i],
-                    reversePath[i + 1]
-                );
+                SwapGatewayLib._findQuickswapV3Pool(swapRouter, reversePath[i], reversePath[i + 1]);
 
                 unchecked {
                     ++i;
                 }
             }
 
-            IAlgebraSwapRouter.ExactOutputParams
-                memory params = IAlgebraSwapRouter.ExactOutputParams({
-                    path: SwapGatewayLib.generateEncodedPath(reversePath),
-                    recipient: recipient,
-                    deadline: deadline,
-                    amountOut: amountOut,
-                    amountInMaximum: amountInMax
-                });
+            IAlgebraSwapRouter.ExactOutputParams memory params = IAlgebraSwapRouter.ExactOutputParams({
+                path: SwapGatewayLib.generateEncodedPath(reversePath),
+                recipient: recipient,
+                deadline: deadline,
+                amountOut: amountOut,
+                amountInMaximum: amountInMax
+            });
 
             if (path[0] == _wETH) {
-                amounts[0] = IAlgebraSwapRouter(swapRouter).exactOutput{
-                    value: amountInMax
-                }(params);
+                amounts[0] = IAlgebraSwapRouter(swapRouter).exactOutput{ value: amountInMax }(params);
             } else {
                 amounts[0] = IAlgebraSwapRouter(swapRouter).exactOutput(params);
             }
@@ -1122,18 +958,13 @@ contract SwapGateway is ISwapGateway, UpgradeableBase {
         } else {
             remainedToken = IERC20Upgradeable(path[0]).balanceOf(address(this));
             if (remainedToken > 0) {
-                IERC20Upgradeable(path[0]).safeTransfer(
-                    msg.sender,
-                    remainedToken
-                );
+                IERC20Upgradeable(path[0]).safeTransfer(msg.sender, remainedToken);
             }
         }
 
         // If receive ETH, unWrap it
         if (path[length - 1] == _wETH) {
-            IWETH(_wETH).withdraw(
-                IERC20Upgradeable(_wETH).balanceOf(address(this))
-            );
+            IWETH(_wETH).withdraw(IERC20Upgradeable(_wETH).balanceOf(address(this)));
             _send(payable(msg.sender), address(this).balance);
         }
     }
@@ -1189,26 +1020,18 @@ contract SwapGateway is ISwapGateway, UpgradeableBase {
         if (path[0] == _wETH) {
             require(msg.value >= amountIn, "SG0");
         } else {
-            IERC20Upgradeable(path[0]).safeTransferFrom(
-                msg.sender,
-                address(this),
-                amountIn
-            );
+            IERC20Upgradeable(path[0]).safeTransferFrom(msg.sender, address(this), amountIn);
 
             // Approve to DODO_APPROVE
             _approveTokenForSwapRouter(
                 path[0],
-                IDODOApproveProxy(
-                    IDODOV2Proxy02(swapRouter)._DODO_APPROVE_PROXY_()
-                )._DODO_APPROVE_(),
+                IDODOApproveProxy(IDODOV2Proxy02(swapRouter)._DODO_APPROVE_PROXY_())._DODO_APPROVE_(),
                 amountIn
             );
         }
 
         if (path[0] == _wETH) {
-            amounts[0] = IDODOV2Proxy02(swapRouter).dodoSwapV2ETHToToken{
-                value: amountIn
-            }(
+            amounts[0] = IDODOV2Proxy02(swapRouter).dodoSwapV2ETHToToken{ value: amountIn }(
                 path[length - 1],
                 amountOutMin,
                 dodoPairs,
@@ -1217,10 +1040,7 @@ contract SwapGateway is ISwapGateway, UpgradeableBase {
                 deadline
             );
 
-            IERC20Upgradeable(path[length - 1]).safeTransfer(
-                msg.sender,
-                amounts[0]
-            );
+            IERC20Upgradeable(path[length - 1]).safeTransfer(msg.sender, amounts[0]);
         } else if (path[length - 1] == _wETH) {
             amounts[0] = IDODOV2Proxy02(swapRouter).dodoSwapV2TokenToETH(
                 path[0],
@@ -1245,10 +1065,7 @@ contract SwapGateway is ISwapGateway, UpgradeableBase {
                 deadline
             );
 
-            IERC20Upgradeable(path[length - 1]).safeTransfer(
-                msg.sender,
-                amounts[0]
-            );
+            IERC20Upgradeable(path[length - 1]).safeTransfer(msg.sender, amounts[0]);
         }
 
         // send back remained token
@@ -1260,10 +1077,7 @@ contract SwapGateway is ISwapGateway, UpgradeableBase {
         } else {
             remainedToken = IERC20Upgradeable(path[0]).balanceOf(address(this));
             if (remainedToken > 0) {
-                IERC20Upgradeable(path[0]).safeTransfer(
-                    msg.sender,
-                    remainedToken
-                );
+                IERC20Upgradeable(path[0]).safeTransfer(msg.sender, remainedToken);
             }
         }
     }
@@ -1274,19 +1088,12 @@ contract SwapGateway is ISwapGateway, UpgradeableBase {
      * @param amount ETH amount (wei) to be sent
      */
     function _send(address payable _to, uint256 amount) private {
-        (bool sent, ) = _to.call{value: amount}("");
+        (bool sent, ) = _to.call{ value: amount }("");
         require(sent, "SR1");
     }
 
-    function _approveTokenForSwapRouter(
-        address token,
-        address swapRouter,
-        uint256 amount
-    ) private {
-        uint256 allowance = IERC20Upgradeable(token).allowance(
-            address(this),
-            swapRouter
-        );
+    function _approveTokenForSwapRouter(address token, address swapRouter, uint256 amount) private {
+        uint256 allowance = IERC20Upgradeable(token).allowance(address(this), swapRouter);
 
         if (allowance == 0) {
             IERC20Upgradeable(token).safeApprove(swapRouter, amount);
@@ -1294,10 +1101,7 @@ contract SwapGateway is ISwapGateway, UpgradeableBase {
         }
 
         if (allowance < amount) {
-            IERC20Upgradeable(token).safeIncreaseAllowance(
-                swapRouter,
-                amount - allowance
-            );
+            IERC20Upgradeable(token).safeIncreaseAllowance(swapRouter, amount - allowance);
         }
     }
 }

@@ -7,7 +7,7 @@ import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20Metadat
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 
 import "./utils/UpgradeableBase.sol";
-import "./interfaces/IStrategyContract.sol";
+import "./Interfaces/IStrategyContract.sol";
 
 contract Booster is UpgradeableBase {
     using SafeERC20Upgradeable for IERC20Upgradeable;
@@ -45,10 +45,7 @@ contract Booster is UpgradeableBase {
      * @notice Set blid in contract
      * @param _boostingAddress address of expense
      */
-    function setBoostingAddress(address _boostingAddress)
-        external
-        onlyOwnerAndAdmin
-    {
+    function setBoostingAddress(address _boostingAddress) external onlyOwnerAndAdmin {
         require(_boostingAddress != ZERO_ADDRESS, "B0");
         boostingAddress = _boostingAddress;
 
@@ -73,15 +70,10 @@ contract Booster is UpgradeableBase {
         // Process boosting
         uint256 lastBoostingTimestamp = lastBoostingTimestamps[logic];
         if (lastBoostingTimestamp > 0) {
-            uint256 boostingAmount = (blidPerDay *
-                uint256(block.timestamp - lastBoostingTimestamp)) / 86400;
+            uint256 boostingAmount = (blidPerDay * uint256(block.timestamp - lastBoostingTimestamp)) / 86400;
 
             // Interaction
-            IERC20Upgradeable(blid).safeTransferFrom(
-                boostingAddress,
-                logic,
-                boostingAmount
-            );
+            IERC20Upgradeable(blid).safeTransferFrom(boostingAddress, logic, boostingAmount);
         }
 
         // Save boosting block
