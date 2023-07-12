@@ -12,6 +12,7 @@
     "@truffle/hdwallet-provider": "^1.7.0",
     "@types/node": "^18.7.18",
     "@uniswap/v3-periphery": "^1.4.3",
+    "dotenv": "^16.3.1",
     "ethers": "^5.7.1",
     "hardhat": "^2.10.0"
   },
