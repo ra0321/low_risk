@@ -177,6 +177,7 @@ contract DForceStrategyOptimismTest is Test {
         uint256[] memory percentages = new uint256[](1);
         percentages[0] = 10000;
         multiLogic.setPercentages(USDT, percentages);
+        multiLogic.setPercentages(USDC, percentages);
         multiLogic.setPercentages(ZERO_ADDRESS, percentages);
 
         // Storage init

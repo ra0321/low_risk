@@ -267,6 +267,26 @@ async function main() {
   // });
 
   // console.log("DForceStrategy deployed.");
+
+  /************************************************** MultiLogic Init ************************************************************ */
+  let multiLogicContract = MultiLogic__factory.connect("0x755ae94087F3014f525CB5Bc6Eb577D261D759E1", contractDeployer);
+
+  const strategiesName = [
+    "USDC-USDT",
+  ];
+  let strategies = [];
+  // @ts-ignore
+  strategies.push({
+    logicContract: "0xc0c32D453705148d32B083150FbdF6FA72712E01",
+    strategyContract: "0xA4f7CAA548bd1Cf778932F0b3Ccd9f599542FB2d",
+  });
+
+  tx = await multiLogicContract.connect(contractDeployer).initStrategies(strategiesName, strategies);
+  await tx.wait(1);
+  tx = await multiLogicContract.connect(contractDeployer).setPercentages("0x7F5c764cBc14f9669B88837ca1490cCa17c31607", [10000]); // USDC
+  await tx.wait(1);
+
+  console.log("MultiLogic initialized successfully");
 }
 
 main()
