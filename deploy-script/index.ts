@@ -269,24 +269,38 @@ async function main() {
   // console.log("DForceStrategy deployed.");
 
   /************************************************** MultiLogic Init ************************************************************ */
-  let multiLogicContract = MultiLogic__factory.connect("0x755ae94087F3014f525CB5Bc6Eb577D261D759E1", contractDeployer);
+  // let multiLogicContract = MultiLogic__factory.connect("0x755ae94087F3014f525CB5Bc6Eb577D261D759E1", contractDeployer);
 
-  const strategiesName = [
-    "USDC-USDT",
-  ];
-  let strategies = [];
-  // @ts-ignore
-  strategies.push({
-    logicContract: "0xc0c32D453705148d32B083150FbdF6FA72712E01",
-    strategyContract: "0xA4f7CAA548bd1Cf778932F0b3Ccd9f599542FB2d",
-  });
+  // const strategiesName = [
+  //   "USDC-USDT",
+  // ];
+  // let strategies = [];
+  // // @ts-ignore
+  // strategies.push({
+  //   logicContract: "0xc0c32D453705148d32B083150FbdF6FA72712E01",
+  //   strategyContract: "0xA4f7CAA548bd1Cf778932F0b3Ccd9f599542FB2d",
+  // });
 
-  tx = await multiLogicContract.connect(contractDeployer).initStrategies(strategiesName, strategies);
+  // tx = await multiLogicContract.connect(contractDeployer).initStrategies(strategiesName, strategies);
+  // await tx.wait(1);
+  // tx = await multiLogicContract.connect(contractDeployer).setPercentages("0x7F5c764cBc14f9669B88837ca1490cCa17c31607", [10000]); // USDC
+  // await tx.wait(1);
+
+  // console.log("MultiLogic initialized successfully");
+
+  /************************************************** Storage Init ************************************************************ */
+  let storageContract = StorageV3__factory.connect("0xd35Db39aF0755AfFbF63E15162EB6923409d021e", contractDeployer);
+
+  tx = await storageContract.connect(contractDeployer).setBLID("0x048C6bAd48C51436764ed1FdB3c9D1c25d2C0ada");
   await tx.wait(1);
-  tx = await multiLogicContract.connect(contractDeployer).setPercentages("0x7F5c764cBc14f9669B88837ca1490cCa17c31607", [10000]); // USDC
+  tx = await storageContract.connect(contractDeployer).setMultiLogicProxy("0x755ae94087F3014f525CB5Bc6Eb577D261D759E1");
+  await tx.wait(1);
+  tx = await storageContract.connect(contractDeployer).addToken("0x7F5c764cBc14f9669B88837ca1490cCa17c31607", "0x16a9FA2FDa030272Ce99B29CF780dFA30361E0f3"); // USDC
+  await tx.wait(1);
+  tx = await storageContract.connect(contractDeployer).addToken("0x94b008aA00579c1307B0EF2c499aD98a8ce58e58", "0xECef79E109e997bCA29c1c0897ec9d7b03647F5E"); // USDT
   await tx.wait(1);
 
-  console.log("MultiLogic initialized successfully");
+  console.log("Storage initialized successfully");
 }
 
 main()
