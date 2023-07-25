@@ -25,8 +25,12 @@ module.exports = {
     target: 'ethers-v5',
   },
   networks: {
-    arbitrum: {
-      url: process.env.ARBITRUM_RPC_URL ?? "",
+    arbitrumOne: {
+      url: process.env.ARBITRUMONE_RPC_URL ?? "",
+      accounts: [process.env.MAINNET_PRIVATE_KEY ?? ""],
+    },
+    arbitrumGoerli: {
+      url: process.env.ARBITRUMGOERLI_RPC_URL ?? "",
       accounts: [process.env.MAINNET_PRIVATE_KEY ?? ""],
     },
     tenderly: {
@@ -39,4 +43,10 @@ module.exports = {
     username: "alphanetra",
     privateVerification: true,
   },
+  etherscan: {
+    apiKey: {
+      arbitrumOne: 'JWEPP1A57KZPWD7JPXK9B64AJRSJRTVTDG',
+      arbitrumGoerli: 'JWEPP1A57KZPWD7JPXK9B64AJRSJRTVTDG'
+    }
+  }
 };
