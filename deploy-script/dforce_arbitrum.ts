@@ -231,86 +231,86 @@ async function main() {
   // console.log("DForceLogic deployed.");
 
   /************************************************** Deploy Strategy ************************************************************ */
-  const lendBorrowLendStrategyHelperFactory = await ethers.getContractFactory("LendBorrowLendStrategyHelper");
-  let lendBorrowLendStrategyHelper = await lendBorrowLendStrategyHelperFactory.connect(contractDeployer).deploy();
-  await lendBorrowLendStrategyHelper.deployed();
-  let lendBorrowLendStrategyHelperAddress = lendBorrowLendStrategyHelper.address;
+  // const lendBorrowLendStrategyHelperFactory = await ethers.getContractFactory("LendBorrowLendStrategyHelper");
+  // let lendBorrowLendStrategyHelper = await lendBorrowLendStrategyHelperFactory.connect(contractDeployer).deploy();
+  // await lendBorrowLendStrategyHelper.deployed();
+  // let lendBorrowLendStrategyHelperAddress = lendBorrowLendStrategyHelper.address;
 
-  console.log("LendBorrowLendStrategyHelper Address:", lendBorrowLendStrategyHelperAddress);
+  // console.log("LendBorrowLendStrategyHelper Address:", lendBorrowLendStrategyHelperAddress);
 
-  await run("verify", {
-    address: lendBorrowLendStrategyHelperAddress,
-    constructorArguments: [],
-  });
-
-  console.log("LendBorrowLendStrategyHelper deployed.");
-
-  const dForceStrategyFactory = await ethers.getContractFactory("DForceStrategy", {
-    libraries: {
-      LendBorrowLendStrategyHelper: lendBorrowLendStrategyHelperAddress,
-    },
-  });
-  let dForceStrategyContract = await upgrades.deployProxy(
-    dForceStrategyFactory,
-    ["0x8E7e9eA9023B81457Ae7E6D2a51b003D421E5408", "0x4029a95a8915900fF7DBDB483C920798e0C4BD78"],
-    {
-      initializer: "__Strategy_init",
-      unsafeAllowLinkedLibraries: true,
-      timeout: 0,
-    }
-  );
-  await dForceStrategyContract.deployed();
-  let dForceStrategyAddress = dForceStrategyContract.address;
-
-  console.log("DForceStrategy Address: ", dForceStrategyAddress);
-
-  tx = await dForceStrategyContract.connect(contractDeployer).setBLID("0x81dE4945807bb31425362F8F7109C18E3dc4f8F0");
-  await tx.wait(1);
-  tx = await dForceStrategyContract.connect(contractDeployer).setMultiLogicProxy("0x192677acC6F9Eeb38B5aC5EB4b69A6C3C2aD7DCF");
-  await tx.wait(1);
-  tx = await dForceStrategyContract.connect(contractDeployer).setStrategyStatistics("0x9320f256a99B331f070C5F88013eE72f3D70679a");
-  await tx.wait(1);
-  tx = await dForceStrategyContract.connect(contractDeployer).setCirclesCount(10);
-  await tx.wait(1);
-  tx = await dForceStrategyContract.connect(contractDeployer).setAvoidLiquidationFactor(5);
-  await tx.wait(1);
-  tx = await dForceStrategyContract.connect(contractDeployer).setRebalanceParameter("800000000000000000", "850000000000000000");
-  await tx.wait(1);
-  tx = await dForceStrategyContract.connect(contractDeployer).setMinBLIDPerRewardsToken(0);
-  await tx.wait(1);
-  tx = await dForceStrategyContract.connect(contractDeployer).setRewardsTokenPriceDeviationLimit("3472222222200");
-  await tx.wait(1);
-  
-  let dForceLogicContract = DForceLogic__factory.connect("0x4029a95a8915900fF7DBDB483C920798e0C4BD78", contractDeployer);
-  tx = await dForceLogicContract.connect(contractDeployer).setAdmin(dForceStrategyAddress);
-  await tx.wait(1);
-
-  await run("verify", {
-    address: dForceStrategyAddress,
-    constructorArguments: [],
-  });
-
-  console.log("DForceStrategy deployed.");
-
-  /************************************************** MultiLogic Init ************************************************************ */
-  // let multiLogicContract = MultiLogic__factory.connect("0x755ae94087F3014f525CB5Bc6Eb577D261D759E1", contractDeployer);
-
-  // const strategiesName = [
-  //   "USDC-USDT",
-  // ];
-  // let strategies = [];
-  // // @ts-ignore
-  // strategies.push({
-  //   logicContract: "0xc0c32D453705148d32B083150FbdF6FA72712E01",
-  //   strategyContract: "0xA4f7CAA548bd1Cf778932F0b3Ccd9f599542FB2d",
+  // await run("verify", {
+  //   address: lendBorrowLendStrategyHelperAddress,
+  //   constructorArguments: [],
   // });
 
-  // tx = await multiLogicContract.connect(contractDeployer).initStrategies(strategiesName, strategies);
+  // console.log("LendBorrowLendStrategyHelper deployed.");
+
+  // const dForceStrategyFactory = await ethers.getContractFactory("DForceStrategy", {
+  //   libraries: {
+  //     LendBorrowLendStrategyHelper: lendBorrowLendStrategyHelperAddress,
+  //   },
+  // });
+  // let dForceStrategyContract = await upgrades.deployProxy(
+  //   dForceStrategyFactory,
+  //   ["0x8E7e9eA9023B81457Ae7E6D2a51b003D421E5408", "0x4029a95a8915900fF7DBDB483C920798e0C4BD78"],
+  //   {
+  //     initializer: "__Strategy_init",
+  //     unsafeAllowLinkedLibraries: true,
+  //     timeout: 0,
+  //   }
+  // );
+  // await dForceStrategyContract.deployed();
+  // let dForceStrategyAddress = dForceStrategyContract.address;
+
+  // console.log("DForceStrategy Address: ", dForceStrategyAddress);
+
+  // tx = await dForceStrategyContract.connect(contractDeployer).setBLID("0x81dE4945807bb31425362F8F7109C18E3dc4f8F0");
   // await tx.wait(1);
-  // tx = await multiLogicContract.connect(contractDeployer).setPercentages("0x7F5c764cBc14f9669B88837ca1490cCa17c31607", [10000]); // USDC
+  // tx = await dForceStrategyContract.connect(contractDeployer).setMultiLogicProxy("0x192677acC6F9Eeb38B5aC5EB4b69A6C3C2aD7DCF");
+  // await tx.wait(1);
+  // tx = await dForceStrategyContract.connect(contractDeployer).setStrategyStatistics("0x9320f256a99B331f070C5F88013eE72f3D70679a");
+  // await tx.wait(1);
+  // tx = await dForceStrategyContract.connect(contractDeployer).setCirclesCount(10);
+  // await tx.wait(1);
+  // tx = await dForceStrategyContract.connect(contractDeployer).setAvoidLiquidationFactor(5);
+  // await tx.wait(1);
+  // tx = await dForceStrategyContract.connect(contractDeployer).setRebalanceParameter("800000000000000000", "850000000000000000");
+  // await tx.wait(1);
+  // tx = await dForceStrategyContract.connect(contractDeployer).setMinBLIDPerRewardsToken(0);
+  // await tx.wait(1);
+  // tx = await dForceStrategyContract.connect(contractDeployer).setRewardsTokenPriceDeviationLimit("3472222222200");
+  // await tx.wait(1);
+  
+  // let dForceLogicContract = DForceLogic__factory.connect("0x4029a95a8915900fF7DBDB483C920798e0C4BD78", contractDeployer);
+  // tx = await dForceLogicContract.connect(contractDeployer).setAdmin(dForceStrategyAddress);
   // await tx.wait(1);
 
-  // console.log("MultiLogic initialized successfully");
+  // await run("verify", {
+  //   address: dForceStrategyAddress,
+  //   constructorArguments: [],
+  // });
+
+  // console.log("DForceStrategy deployed.");
+
+  /************************************************** MultiLogic Init ************************************************************ */
+  let multiLogicContract = MultiLogic__factory.connect("0x192677acC6F9Eeb38B5aC5EB4b69A6C3C2aD7DCF", contractDeployer);
+
+  const strategiesName = [
+    "USDC-USX",
+  ];
+  let strategies = [];
+  // @ts-ignore
+  strategies.push({
+    logicContract: "0x4029a95a8915900fF7DBDB483C920798e0C4BD78",
+    strategyContract: "0xE3ef4e4523ffa9a2E63cb3D8c85c603E94553120",
+  });
+
+  tx = await multiLogicContract.connect(contractDeployer).initStrategies(strategiesName, strategies);
+  await tx.wait(1);
+  tx = await multiLogicContract.connect(contractDeployer).setPercentages("0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8", [10000]); // USDC
+  await tx.wait(1);
+
+  console.log("MultiLogic initialized successfully");
 
   /************************************************** Storage Init ************************************************************ */
   // let storageContract = StorageV3__factory.connect("0xd35Db39aF0755AfFbF63E15162EB6923409d021e", contractDeployer);
