@@ -31,12 +31,12 @@ import "@tenderly/hardhat-tenderly";
   swapGatewayAddress: "0xC3C0e851f441913B2Eb8FAf70dC9a212C1Cd1CFD",
   strategyStatisticsLibAddress: "0x7e8136bdE9b66048fBFAa61a93F89eD97B47761d",
   dForceStatisticsAddress: "0x9320f256a99B331f070C5F88013eE72f3D70679a",
-
+  dForceLogicAddress: "0x4029a95a8915900fF7DBDB483C920798e0C4BD78",
 
 
   
   
-  dForceLogicAddress: "0xc0c32D453705148d32B083150FbdF6FA72712E01",
+  
   lendBorrowLendStrategyHelperAddress: "0x823A790e7672afcAFe8CE408aA1f5EFf6bc3ccd7",
   dForceStrategyAddress: "0xA4f7CAA548bd1Cf778932F0b3Ccd9f599542FB2d"
 */
@@ -142,93 +142,98 @@ async function main() {
 
 
   /************************************************** Deploy Statistics ************************************************************ */
-  const strategyStatisticsLibFactory = await ethers.getContractFactory("StrategyStatisticsLib");
-  let strategyStatisticsLib = await strategyStatisticsLibFactory.connect(contractDeployer).deploy();
-  await strategyStatisticsLib.deployed();
-  let strategyStatisticsLibAddress = strategyStatisticsLib.address;
+  // const strategyStatisticsLibFactory = await ethers.getContractFactory("StrategyStatisticsLib");
+  // let strategyStatisticsLib = await strategyStatisticsLibFactory.connect(contractDeployer).deploy();
+  // await strategyStatisticsLib.deployed();
+  // let strategyStatisticsLibAddress = strategyStatisticsLib.address;
 
-  console.log("StrategyStatisticsLib Address:", strategyStatisticsLibAddress);
+  // console.log("StrategyStatisticsLib Address:", strategyStatisticsLibAddress);
 
-  console.log("Verifying: StrategyStatisticsLib ", strategyStatisticsLibAddress);
-  await run("verify", {
-    address: strategyStatisticsLibAddress,
-    constructorArguments: [],
-  });
+  // console.log("Verifying: StrategyStatisticsLib ", strategyStatisticsLibAddress);
+  // await run("verify", {
+  //   address: strategyStatisticsLibAddress,
+  //   constructorArguments: [],
+  // });
 
-  console.log("StrategyStatisticsLib deployed.");
+  // console.log("StrategyStatisticsLib deployed.");
 
-  const dForceStatisticsFactory = await ethers.getContractFactory("DForceStatistics", {
-    libraries: {
-      StrategyStatisticsLib: strategyStatisticsLibAddress,
-    },
-  });
-  let dForceStatisticsContract = await upgrades.deployProxy(dForceStatisticsFactory, [], {
-    initializer: "__StrategyStatistics_init",
-    unsafeAllowLinkedLibraries: true,
-    timeout: 0,
-  });
-  await dForceStatisticsContract.deployed();
-  let dForceStatisticsAddress = dForceStatisticsContract.address;
+  // const dForceStatisticsFactory = await ethers.getContractFactory("DForceStatistics", {
+  //   libraries: {
+  //     StrategyStatisticsLib: strategyStatisticsLibAddress,
+  //   },
+  // });
+  // let dForceStatisticsContract = await upgrades.deployProxy(dForceStatisticsFactory, [], {
+  //   initializer: "__StrategyStatistics_init",
+  //   unsafeAllowLinkedLibraries: true,
+  //   timeout: 0,
+  // });
+  // await dForceStatisticsContract.deployed();
+  // let dForceStatisticsAddress = dForceStatisticsContract.address;
 
-  console.log("DForceStatistics Address: ", dForceStatisticsAddress);
+  // console.log("DForceStatistics Address: ", dForceStatisticsAddress);
 
-  console.log("Verifying: DForceStatistics ", dForceStatisticsAddress);
-  await run("verify", {
-    address: dForceStatisticsAddress,
-    constructorArguments: [],
-  });
+  // console.log("Verifying: DForceStatistics ", dForceStatisticsAddress);
+  // await run("verify", {
+  //   address: dForceStatisticsAddress,
+  //   constructorArguments: [],
+  // });
 
-  tx = await dForceStatisticsContract.connect(contractDeployer).setSwapGateway("0xC3C0e851f441913B2Eb8FAf70dC9a212C1Cd1CFD");
-  await tx.wait(1);
-  tx = await dForceStatisticsContract.connect(contractDeployer).setRewardsXToken("0xaEa8e2e7C97C5B7Cd545d3b152F669bAE29C4a63"); // iDF
-  await tx.wait(1);
-  tx = await dForceStatisticsContract.connect(contractDeployer).setBLID("0x81dE4945807bb31425362F8F7109C18E3dc4f8F0"); // BLID
-  await tx.wait(1);
-  tx = await dForceStatisticsContract.connect(contractDeployer).setBLIDSwap("0xE592427A0AEce92De3Edee1F18E0157C05861564", ["0x81dE4945807bb31425362F8F7109C18E3dc4f8F0", "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9"]); // uniswapV3Router, [blid, USDT]
-  await tx.wait(1);
-  tx = await dForceStatisticsContract.connect(contractDeployer).setPriceOracle("0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9", "0x3f3f5dF88dC9F13eac63DF89EC16ef6e7E25DdE7"); // USDT
-  await tx.wait(1);
-  tx = await dForceStatisticsContract.connect(contractDeployer).setPriceOracle("0x9340e3296121507318874ce9C04AFb4492aF0284", "0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3"); // USX_USDC
-  await tx.wait(1);
-  tx = await dForceStatisticsContract.connect(contractDeployer).setPriceOracle("0x0000000000000000000000000000000000000000", "0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612"); // ETH
-  await tx.wait(1);
-  tx = await dForceStatisticsContract.connect(contractDeployer).setPriceOracle("0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8", "0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3"); // USDC
-  await tx.wait(1);
+  // tx = await dForceStatisticsContract.connect(contractDeployer).setSwapGateway("0xC3C0e851f441913B2Eb8FAf70dC9a212C1Cd1CFD");
+  // await tx.wait(1);
+  // tx = await dForceStatisticsContract.connect(contractDeployer).setRewardsXToken("0xaEa8e2e7C97C5B7Cd545d3b152F669bAE29C4a63"); // iDF
+  // await tx.wait(1);
+  // tx = await dForceStatisticsContract.connect(contractDeployer).setBLID("0x81dE4945807bb31425362F8F7109C18E3dc4f8F0"); // BLID
+  // await tx.wait(1);
+  // tx = await dForceStatisticsContract.connect(contractDeployer).setBLIDSwap("0xE592427A0AEce92De3Edee1F18E0157C05861564", ["0x81dE4945807bb31425362F8F7109C18E3dc4f8F0", "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9"]); // uniswapV3Router, [blid, USDT]
+  // await tx.wait(1);
+  // tx = await dForceStatisticsContract.connect(contractDeployer).setPriceOracle("0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9", "0x3f3f5dF88dC9F13eac63DF89EC16ef6e7E25DdE7"); // USDT
+  // await tx.wait(1);
+  // tx = await dForceStatisticsContract.connect(contractDeployer).setPriceOracle("0x9340e3296121507318874ce9C04AFb4492aF0284", "0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3"); // USX_USDC
+  // await tx.wait(1);
+  // tx = await dForceStatisticsContract.connect(contractDeployer).setPriceOracle("0x0000000000000000000000000000000000000000", "0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612"); // ETH
+  // await tx.wait(1);
+  // tx = await dForceStatisticsContract.connect(contractDeployer).setPriceOracle("0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8", "0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3"); // USDC
+  // await tx.wait(1);
 
-  console.log("DForceStatistics deployed.");
+  // console.log("DForceStatistics deployed.");
 
 
   /************************************************** Deploy Logic ************************************************************ */
-  // const dForceLogicFactory = await ethers.getContractFactory("DForceLogic");
-  // let dForceLogicContract = await dForceLogicFactory.connect(contractDeployer).deploy();
-  // await dForceLogicContract.deployed();
-  // let dForceLogicAddress = dForceLogicContract.address;
+  const dForceLogicFactory = await ethers.getContractFactory("DForceLogic");
+  let dForceLogicContract = await upgrades.deployProxy(
+    dForceLogicFactory,
+    ["0x8E7e9eA9023B81457Ae7E6D2a51b003D421E5408", "0xF45e2ae152384D50d4e9b08b8A1f65F0d96786C3"],
+    {
+      initializer: "__LendingLogic_init",
+      timeout: 0,
+    }
+  );
+  await dForceLogicContract.deployed();
+  let dForceLogicAddress = dForceLogicContract.address;
 
-  // console.log("DForceLogic Address: ", dForceLogicAddress);
+  console.log("DForceLogic Address: ", dForceLogicAddress);
 
-  // tx = await dForceLogicContract.connect(contractDeployer).__LendingLogic_init("0xA300A84D8970718Dac32f54F61Bd568142d8BCF4", "0x870ac6a76A30742800609F205c741E86Db9b71a2");
-  // await tx.wait(1);
-  // tx = await dForceLogicContract.connect(contractDeployer).setExpenseAddress("0x43ad0f0585659a68faA72FE276e48B9d2a23B117");
-  // await tx.wait(1);
-  // tx = await dForceLogicContract.connect(contractDeployer).setMultiLogicProxy("0x755ae94087F3014f525CB5Bc6Eb577D261D759E1");
-  // await tx.wait(1);
-  // tx = await dForceLogicContract.connect(contractDeployer).setBLID("0x048C6bAd48C51436764ed1FdB3c9D1c25d2C0ada");
-  // await tx.wait(1);
-  // tx = await dForceLogicContract.connect(contractDeployer).setSwapGateway("0x16477d927647acB01B88162Bbc40F54b38ae1f47");
-  // await tx.wait(1);
-  // tx = await dForceLogicContract.connect(contractDeployer).approveTokenForSwap("0x16477d927647acB01B88162Bbc40F54b38ae1f47", "0x048C6bAd48C51436764ed1FdB3c9D1c25d2C0ada"); // BLID
-  // await tx.wait(1);
-  // tx = await dForceLogicContract.connect(contractDeployer).approveTokenForSwap("0x16477d927647acB01B88162Bbc40F54b38ae1f47", "0x9e5AAC1Ba1a2e6aEd6b32689DFcF62A509Ca96f3"); // DF
-  // await tx.wait(1);
-  // tx = await dForceLogicContract.connect(contractDeployer).approveTokenForSwap("0x16477d927647acB01B88162Bbc40F54b38ae1f47", "0x7F5c764cBc14f9669B88837ca1490cCa17c31607"); // USDC
-  // await tx.wait(1);
+  tx = await dForceLogicContract.connect(contractDeployer).setExpenseAddress("0x43ad0f0585659a68faA72FE276e48B9d2a23B117");
+  await tx.wait(1);
+  tx = await dForceLogicContract.connect(contractDeployer).setMultiLogicProxy("0x192677acC6F9Eeb38B5aC5EB4b69A6C3C2aD7DCF");
+  await tx.wait(1);
+  tx = await dForceLogicContract.connect(contractDeployer).setBLID("0x81dE4945807bb31425362F8F7109C18E3dc4f8F0");
+  await tx.wait(1);
+  tx = await dForceLogicContract.connect(contractDeployer).setSwapGateway("0xC3C0e851f441913B2Eb8FAf70dC9a212C1Cd1CFD");
+  await tx.wait(1);
+  tx = await dForceLogicContract.connect(contractDeployer).approveTokenForSwap("0xC3C0e851f441913B2Eb8FAf70dC9a212C1Cd1CFD", "0x81dE4945807bb31425362F8F7109C18E3dc4f8F0"); // BLID
+  await tx.wait(1);
+  tx = await dForceLogicContract.connect(contractDeployer).approveTokenForSwap("0xC3C0e851f441913B2Eb8FAf70dC9a212C1Cd1CFD", "0xaE6aab43C4f3E0cea4Ab83752C278f8dEbabA689"); // DF
+  await tx.wait(1);
+  tx = await dForceLogicContract.connect(contractDeployer).approveTokenForSwap("0xC3C0e851f441913B2Eb8FAf70dC9a212C1Cd1CFD", "0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8"); // USDC
+  await tx.wait(1);
 
-  // await tenderly.verify({
-  //   address: dForceLogicAddress,
-  //   name: "DForceLogic",
-  // });
+  await run("verify", {
+    address: dForceLogicAddress,
+    constructorArguments: [],
+  });
 
-  // console.log("DForceLogic deployed.");
+  console.log("DForceLogic deployed.");
 
   /************************************************** Deploy Strategy ************************************************************ */
   // const lendBorrowLendStrategyHelperFactory = await ethers.getContractFactory("LendBorrowLendStrategyHelper");
