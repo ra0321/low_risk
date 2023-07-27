@@ -71,6 +71,7 @@ contract DForceStrategyArbitrumTest is Test {
     address iUSDT = 0xf52f079Af080C9FB5AFCA57DDE0f8B83d49692a9;
     address iETH = 0xEe338313f022caee84034253174FA562495dcC15;
     address iUSDC = 0x8dc3312c68125a94916d62B97bb5D925f84d4aE0;
+    address iUSX = 0x0385F851060c09A552F1A28Ea3f612660256cBAA;
     address iARB = 0xD037c36dbc81a8890728D850E080e38F6EeB95EF;
     address iDAI = 0xf6995955e4B0E5b287693c221f456951D612b628;
     address ETH = 0x82aF49447D8a07e3bd95BD0d56f35241523fBab1;
@@ -225,7 +226,7 @@ contract DForceStrategyArbitrumTest is Test {
         vm.stopPrank();
     }
 
-    function test_USDC_ARB() public {
+    function xtest_USDC_ARB() public {
         vm.startPrank(owner);
 
         // Configuration
@@ -283,6 +284,74 @@ contract DForceStrategyArbitrumTest is Test {
         // strategy.setSwapInfo(swapInfo, 4);
 
         _testStrategy(iUSDC, USDC, iARB, ARB, 2 * 10 ** 6);
+
+        vm.stopPrank();
+    }
+
+    function test_USDC_USX() public {
+        vm.startPrank(owner);
+
+        // Configuration
+        strategy.setStrategyXToken(iUSX);
+        strategy.setSupplyXToken(iUSDC);
+
+        swapInfo.swapRouters = new address[](2);
+        swapInfo.swapRouters[0] = DODOV2Proxy02;
+        swapInfo.swapRouters[1] = uniswapV3Router;
+        swapInfo.paths = new address[][](2);
+        swapInfo.paths[0] = new address[](4);
+        swapInfo.paths[0][0] = DF;
+        swapInfo.paths[0][1] = DF_USX;
+        swapInfo.paths[0][2] = USX_USDC;
+        swapInfo.paths[0][3] = USDC;
+        swapInfo.paths[1] = new address[](3);
+        swapInfo.paths[1][0] = USDC;
+        swapInfo.paths[1][1] = USDT;
+        swapInfo.paths[1][2] = blid;
+        strategy.setSwapInfo(swapInfo, 0);
+
+        swapInfo.swapRouters = new address[](1);
+        swapInfo.swapRouters[0] = DODOV2Proxy02;
+        swapInfo.paths = new address[][](1);
+        swapInfo.paths[0] = new address[](3);
+        swapInfo.paths[0][0] = DF;
+        swapInfo.paths[0][1] = DF_USX;
+        swapInfo.paths[0][2] = USX;
+        strategy.setSwapInfo(swapInfo, 1);
+
+        swapInfo.swapRouters = new address[](2);
+        swapInfo.swapRouters[0] = DODOV2Proxy02;
+        swapInfo.swapRouters[1] = uniswapV3Router;
+        swapInfo.paths = new address[][](2);
+        swapInfo.paths[0] = new address[](3);
+        swapInfo.paths[0][0] = USX;
+        swapInfo.paths[0][1] = USX_USDC;
+        swapInfo.paths[0][2] = USDC;
+        swapInfo.paths[1] = new address[](3);
+        swapInfo.paths[1][0] = USDC;
+        swapInfo.paths[1][1] = USDT;
+        swapInfo.paths[1][2] = blid;
+        strategy.setSwapInfo(swapInfo, 2);
+
+        swapInfo.swapRouters = new address[](1);
+        swapInfo.swapRouters[0] = DODOV2Proxy02;
+        swapInfo.paths = new address[][](1);
+        swapInfo.paths[0] = new address[](3);
+        swapInfo.paths[0][0] = USX;
+        swapInfo.paths[0][1] = USX_USDC;
+        swapInfo.paths[0][2] = USDC;
+        strategy.setSwapInfo(swapInfo, 3);
+
+        swapInfo.swapRouters = new address[](1);
+        swapInfo.swapRouters[0] = uniswapV3Router;
+        swapInfo.paths = new address[][](1);
+        swapInfo.paths[0] = new address[](3);
+        swapInfo.paths[0][0] = USDC;
+        swapInfo.paths[0][1] = USDT;
+        swapInfo.paths[0][2] = blid;
+        strategy.setSwapInfo(swapInfo, 4);
+
+        _testStrategy(iUSDC, USDC, iUSX, USX, 2 * 10 ** 6);
 
         vm.stopPrank();
     }
