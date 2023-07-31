@@ -412,113 +412,113 @@ contract DForceStrategyArbitrumTest is Test {
         assertEq(tokenInfo.borrowAmount > 0, true);
         assertEq(strategy.checkRebalance(), false);
 
-        // if (strategyToken != ZERO_ADDRESS) {
-        //     // Test Claim
-        //     console.log("============= Claim =============");
-        //     vm.warp(block.timestamp + 2000);
-        //     vm.roll(block.number + 999999);
+        if (strategyToken != ZERO_ADDRESS) {
+            // Test Claim
+            console.log("============= Claim =============");
+            vm.warp(block.timestamp + 2000);
+            vm.roll(block.number + 999999);
 
-        //     blidExpense = IERC20MetadataUpgradeable(blid).balanceOf(expense);
-        //     blidStorage = IERC20MetadataUpgradeable(blid).balanceOf(_storage);
+            blidExpense = IERC20MetadataUpgradeable(blid).balanceOf(expense);
+            blidStorage = IERC20MetadataUpgradeable(blid).balanceOf(_storage);
 
-        //     console.log("BLID of expense   : ", blidExpense);
-        //     console.log("BLID of storage   : ", blidStorage);
+            console.log("BLID of expense   : ", blidExpense);
+            console.log("BLID of storage   : ", blidStorage);
 
-        //     console.log("-- After Claim with small DF amount --");
-        //     strategy.setMinRewardsSwapLimit(10 ** 30);
-        //     strategy.claimRewards();
+            console.log("-- After Claim with small DF amount --");
+            strategy.setMinRewardsSwapLimit(10 ** 30);
+            strategy.claimRewards();
 
-        //     if (false) {
-        //         strategy.setMinRewardsSwapLimit(10 ** 2);
-        //         address[] memory holders = new address[](1);
-        //         holders[0] = logic;
-        //         address[] memory supplys = new address[](2);
-        //         supplys[0] = supplyXToken;
-        //         supplys[1] = strategyXToken;
-        //         address[] memory borrows = new address[](1);
-        //         borrows[0] = strategyXToken;
-        //         // IDistributionDForce(rainMaker).claimRewards(holders, supplys, borrows);
-        //         console.log(IERC20MetadataUpgradeable(DF).balanceOf(logic));
-        //         return;
-        //     }
+            if (false) {
+                strategy.setMinRewardsSwapLimit(10 ** 2);
+                address[] memory holders = new address[](1);
+                holders[0] = logic;
+                address[] memory supplys = new address[](2);
+                supplys[0] = supplyXToken;
+                supplys[1] = strategyXToken;
+                address[] memory borrows = new address[](1);
+                borrows[0] = strategyXToken;
+                // IDistributionDForce(rainMaker).claimRewards(holders, supplys, borrows);
+                console.log(IERC20MetadataUpgradeable(DF).balanceOf(logic));
+                return;
+            }
 
-        //     blidExpenseNew = IERC20MetadataUpgradeable(blid).balanceOf(expense);
-        //     blidStorageNew = IERC20MetadataUpgradeable(blid).balanceOf(_storage);
-        //     Rewards_balance = IERC20MetadataUpgradeable(rewardsToken).balanceOf(logic);
+            blidExpenseNew = IERC20MetadataUpgradeable(blid).balanceOf(expense);
+            blidStorageNew = IERC20MetadataUpgradeable(blid).balanceOf(_storage);
+            Rewards_balance = IERC20MetadataUpgradeable(rewardsToken).balanceOf(logic);
 
-        //     console.log("BLID of expense   : ", blidExpenseNew);
-        //     console.log("BLID of storage   : ", blidStorageNew);
-        //     console.log("Rewards of Logic  : ", Rewards_balance);
+            console.log("BLID of expense   : ", blidExpenseNew);
+            console.log("BLID of storage   : ", blidStorageNew);
+            console.log("Rewards of Logic  : ", Rewards_balance);
 
-        //     assertEq(blidExpenseNew >= blidExpense, true);
-        //     assertEq(blidStorageNew >= blidStorage, true);
-        //     assertEq(Rewards_balance > 0, true);
+            assertEq(blidExpenseNew >= blidExpense, true);
+            assertEq(blidStorageNew >= blidStorage, true);
+            assertEq(Rewards_balance > 0, true);
 
-        //     console.log("-- After Claim with enough DF amount --");
-        //     vm.warp(block.timestamp + 20);
-        //     blidExpense = blidExpenseNew;
-        //     blidStorage = blidStorageNew;
+            console.log("-- After Claim with enough DF amount --");
+            vm.warp(block.timestamp + 20);
+            blidExpense = blidExpenseNew;
+            blidStorage = blidStorageNew;
 
-        //     strategy.setMinRewardsSwapLimit(1000000);
-        //     _showXTokenInfo();
-        //     console.log("------");
-        //     strategy.claimRewards();
+            strategy.setMinRewardsSwapLimit(1000000);
+            _showXTokenInfo();
+            console.log("------");
+            strategy.claimRewards();
 
-        //     blidExpenseNew = IERC20MetadataUpgradeable(blid).balanceOf(expense);
-        //     blidStorageNew = IERC20MetadataUpgradeable(blid).balanceOf(_storage);
-        //     Rewards_balance = IERC20MetadataUpgradeable(rewardsToken).balanceOf(logic);
+            blidExpenseNew = IERC20MetadataUpgradeable(blid).balanceOf(expense);
+            blidStorageNew = IERC20MetadataUpgradeable(blid).balanceOf(_storage);
+            Rewards_balance = IERC20MetadataUpgradeable(rewardsToken).balanceOf(logic);
 
-        //     console.log("BLID of expense   : ", blidExpenseNew);
-        //     console.log("BLID of storage   : ", blidStorageNew);
-        //     console.log("Rewards of Logic  : ", Rewards_balance);
+            console.log("BLID of expense   : ", blidExpenseNew);
+            console.log("BLID of storage   : ", blidStorageNew);
+            console.log("Rewards of Logic  : ", Rewards_balance);
 
-        //     assertEq(blidExpenseNew > blidExpense, true);
-        //     assertEq(blidStorageNew > blidStorage, true);
-        //     assertEq(Rewards_balance == 0, true);
+            assertEq(blidExpenseNew > blidExpense, true);
+            assertEq(blidStorageNew > blidStorage, true);
+            assertEq(Rewards_balance == 0, true);
 
-        //     console.log("-- Rewards Price Kill Switch Active --");
-        //     strategy.setRewardsTokenPrice(
-        //         (statistics.getRewardsTokenPrice(comptroller, rewardsToken) * 8638) / 8640
-        //     );
-        //     vm.warp(block.timestamp + 2000);
-        //     vm.roll(block.number + 99999);
-        //     strategy.claimRewards();
-        //     Rewards_balance = IERC20MetadataUpgradeable(rewardsToken).balanceOf(logic);
-        //     console.log("Rewards of Logic  : ", Rewards_balance);
-        //     assertEq(Rewards_balance > 0, true);
+            console.log("-- Rewards Price Kill Switch Active --");
+            strategy.setRewardsTokenPrice(
+                (statistics.getRewardsTokenPrice(comptroller, rewardsToken) * 8638) / 8640
+            );
+            vm.warp(block.timestamp + 2000);
+            vm.roll(block.number + 99999);
+            strategy.claimRewards();
+            Rewards_balance = IERC20MetadataUpgradeable(rewardsToken).balanceOf(logic);
+            console.log("Rewards of Logic  : ", Rewards_balance);
+            assertEq(Rewards_balance > 0, true);
 
-        //     console.log("-- Rewards Price Kill Switch Deactive --");
-        //     strategy.setRewardsTokenPrice(
-        //         (statistics.getRewardsTokenPrice(comptroller, rewardsToken) * 8639) / 8640
-        //     );
-        //     vm.warp(block.timestamp + 2000);
-        //     vm.roll(block.number + 99999);
-        //     strategy.claimRewards();
-        //     Rewards_balance = IERC20MetadataUpgradeable(rewardsToken).balanceOf(logic);
-        //     console.log("Rewards of Logic  : ", Rewards_balance);
-        //     assertEq(Rewards_balance, 0);
-        //     tokenInfo = _showXTokenInfo();
+            console.log("-- Rewards Price Kill Switch Deactive --");
+            strategy.setRewardsTokenPrice(
+                (statistics.getRewardsTokenPrice(comptroller, rewardsToken) * 8639) / 8640
+            );
+            vm.warp(block.timestamp + 2000);
+            vm.roll(block.number + 99999);
+            strategy.claimRewards();
+            Rewards_balance = IERC20MetadataUpgradeable(rewardsToken).balanceOf(logic);
+            console.log("Rewards of Logic  : ", Rewards_balance);
+            assertEq(Rewards_balance, 0);
+            tokenInfo = _showXTokenInfo();
 
-        //     if (supplyXToken == strategyXToken) {
-        //         assertEq(
-        //             int256(tokenInfo.lendingAmount) -
-        //                 int256(tokenInfo.totalSupply) +
-        //                 int256(tokenInfo.borrowAmount) <=
-        //                 2,
-        //             true
-        //         );
-        //     } else {
-        //         XTokenInfo memory supplyTokenInfo = statistics.getStrategyXTokenInfo(supplyXToken, logic);
-        //         assertEq(
-        //             int256(supplyTokenInfo.lendingAmountUSD) -
-        //                 int256(supplyTokenInfo.totalSupplyUSD) -
-        //                 int256(tokenInfo.totalSupplyUSD) +
-        //                 int256(tokenInfo.borrowAmountUSD) <=
-        //                 int256(10 ** (18 - IERC20MetadataUpgradeable(strategyToken).decimals())),
-        //             true
-        //         );
-        //     }
-        // }
+            if (supplyXToken == strategyXToken) {
+                assertEq(
+                    int256(tokenInfo.lendingAmount) -
+                        int256(tokenInfo.totalSupply) +
+                        int256(tokenInfo.borrowAmount) <=
+                        2,
+                    true
+                );
+            } else {
+                XTokenInfo memory supplyTokenInfo = statistics.getStrategyXTokenInfo(supplyXToken, logic);
+                assertEq(
+                    int256(supplyTokenInfo.lendingAmountUSD) -
+                        int256(supplyTokenInfo.totalSupplyUSD) -
+                        int256(tokenInfo.totalSupplyUSD) +
+                        int256(tokenInfo.borrowAmountUSD) <=
+                        int256(10 ** (18 - IERC20MetadataUpgradeable(strategyToken).decimals())),
+                    true
+                );
+            }
+        }
 
         // Test destroy
         console.log("============= Rebalance - Destroy Circle =============");
