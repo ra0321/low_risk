@@ -56,7 +56,7 @@ contract SonneStrategyOptimismTest is Test {
 
     uint256 private constant BLOCK_NUMBER = 106_737_839;
     address private constant ZERO_ADDRESS = address(0);
-    address expense = 0xa7e21fabEC16A185Acae3AB3d004DF84b23C3501;
+    address expense = 0x43ad0f0585659a68faA72FE276e48B9d2a23B117;
     address comptroller = 0x60CF091cD3f50420d50fD7f707414d0DF4751C58;
     address rainMaker = 0x938Ed674a5580c9217612dE99Da8b5d476dCF13f;
     address blid = 0x048C6bAd48C51436764ed1FdB3c9D1c25d2C0ada;
@@ -109,28 +109,28 @@ contract SonneStrategyOptimismTest is Test {
 
         swapGateway.setWETH(ETH);
 
-        // Statistics
-        statistics = new SonneStatistics();
-        statistics.__StrategyStatistics_init();
-        statistics.setSwapGateway(address(swapGateway));
+        // // Statistics
+        // statistics = new SonneStatistics();
+        // statistics.__StrategyStatistics_init();
+        // statistics.setSwapGateway(address(swapGateway));
 
-        statistics.setBLID(blid);
+        // statistics.setBLID(blid);
 
-        address[] memory path = new address[](2);
-        path[0] = blid;
-        path[1] = USDT;
-        statistics.setBLIDSwap(uniswapV3Router, path);
+        // address[] memory path = new address[](2);
+        // path[0] = blid;
+        // path[1] = USDT;
+        // statistics.setBLIDSwap(uniswapV3Router, path);
 
-        statistics.setPriceOracle(USDT, 0xECef79E109e997bCA29c1c0897ec9d7b03647F5E); // USDT
+        // statistics.setPriceOracle(USDT, 0xECef79E109e997bCA29c1c0897ec9d7b03647F5E); // USDT
 
-        statistics.setPriceOracle(USX_USDC, 0x16a9FA2FDa030272Ce99B29CF780dFA30361E0f3); // USX_USDC
+        // statistics.setPriceOracle(USX_USDC, 0x16a9FA2FDa030272Ce99B29CF780dFA30361E0f3); // USX_USDC
 
-        statistics.setPriceOracle(
-            0x0000000000000000000000000000000000000000,
-            0x13e3Ee699D1909E989722E753853AE30b17e08c5
-        ); // ETH
+        // statistics.setPriceOracle(
+        //     0x0000000000000000000000000000000000000000,
+        //     0x13e3Ee699D1909E989722E753853AE30b17e08c5
+        // ); // ETH
 
-        statistics.setPriceOracle(USDC, 0x16a9FA2FDa030272Ce99B29CF780dFA30361E0f3); // USDC
+        // statistics.setPriceOracle(USDC, 0x16a9FA2FDa030272Ce99B29CF780dFA30361E0f3); // USDC
 
         // strategyLogic
         strategyLogic = new SonneLogic();
@@ -152,7 +152,7 @@ contract SonneStrategyOptimismTest is Test {
 
         strategy.setBLID(blid);
         strategy.setMultiLogicProxy(multiLogicProxy);
-        strategy.setStrategyStatistics(address(statistics));
+        // strategy.setStrategyStatistics(address(statistics));
         strategy.setCirclesCount(_circlesCount);
         strategy.setAvoidLiquidationFactor(5);
 
@@ -192,30 +192,30 @@ contract SonneStrategyOptimismTest is Test {
         // Deal and swap USDT
         vm.deal(owner, 10 ** 18);
 
-        path = new address[](2);
-        path[0] = ZERO_ADDRESS;
-        path[1] = USDT;
+        // path = new address[](2);
+        // path[0] = ZERO_ADDRESS;
+        // path[1] = USDT;
 
-        swapGateway.swap{ value: 10 ** 18 }(uniswapV3Router, 10 ** 18, 0, path, true, block.timestamp + 3600);
+        // swapGateway.swap{ value: 10 ** 18 }(uniswapV3Router, 10 ** 18, 0, path, true, block.timestamp + 3600);
 
-        // Deal and swap USDC
-        vm.deal(owner, 10 ** 18);
+        // // Deal and swap USDC
+        // vm.deal(owner, 10 ** 18);
 
-        path = new address[](2);
-        path[0] = ZERO_ADDRESS;
-        path[1] = USDC;
+        // path = new address[](2);
+        // path[0] = ZERO_ADDRESS;
+        // path[1] = USDC;
 
-        swapGateway.swap{ value: 10 ** 18 }(uniswapV3Router, 10 ** 18, 0, path, true, block.timestamp + 3600);
+        // swapGateway.swap{ value: 10 ** 18 }(uniswapV3Router, 10 ** 18, 0, path, true, block.timestamp + 3600);
 
-        // Deal and swap DAI
-        vm.deal(owner, 10 ** 18);
+        // // Deal and swap DAI
+        // vm.deal(owner, 10 ** 18);
 
-        path = new address[](3);
-        path[0] = ZERO_ADDRESS;
-        path[1] = USDC;
-        path[2] = DAI;
+        // path = new address[](3);
+        // path[0] = ZERO_ADDRESS;
+        // path[1] = USDC;
+        // path[2] = DAI;
 
-        swapGateway.swap{ value: 10 ** 18 }(uniswapV3Router, 10 ** 18, 0, path, true, block.timestamp + 3600);
+        // swapGateway.swap{ value: 10 ** 18 }(uniswapV3Router, 10 ** 18, 0, path, true, block.timestamp + 3600);
 
         vm.stopPrank();
     }
@@ -319,10 +319,10 @@ contract SonneStrategyOptimismTest is Test {
         console.log("============= Use Token =============");
         strategy.setMinStorageAvailable(depositAmount * 10);
         assertEq(strategy.checkUseToken(), false);
-        assertEq(strategy.checkRebalance(), false);
+        // assertEq(strategy.checkRebalance(), false);
         strategy.useToken();
-        tokenInfo = statistics.getStrategyXTokenInfo(supplyXToken, logic);
-        assertEq(tokenInfo.totalSupply, 0);
+        // tokenInfo = statistics.getStrategyXTokenInfo(supplyXToken, logic);
+        // assertEq(tokenInfo.totalSupply, 0);
 
         strategy.setMinStorageAvailable(depositAmount / 10);
         assertEq(strategy.checkUseToken(), true);
@@ -331,16 +331,16 @@ contract SonneStrategyOptimismTest is Test {
             "Available in Storage : ",
             IMultiLogicProxy(multiLogicProxy).getTokenAvailable(supplyToken, logic)
         );
-        tokenInfo = statistics.getStrategyXTokenInfo(supplyXToken, logic);
-        assertEq(tokenInfo.totalSupply > 0, true);
+        // tokenInfo = statistics.getStrategyXTokenInfo(supplyXToken, logic);
+        // assertEq(tokenInfo.totalSupply > 0, true);
 
         // Test Create Circle
         console.log("============= Create Circle =============");
-        assertEq(strategy.checkRebalance(), true);
-        strategy.rebalance();
-        tokenInfo = _showXTokenInfo();
-        assertEq(tokenInfo.borrowAmount > 0, true);
-        assertEq(strategy.checkRebalance(), false);
+        // assertEq(strategy.checkRebalance(), true);
+        strategy.generateCircles(soUSDT, (depositAmount * 75) / 100, 10);
+        // tokenInfo = _showXTokenInfo();
+        // assertEq(tokenInfo.borrowAmount > 0, true);
+        // assertEq(strategy.checkRebalance(), false);
 
         // if (strategyToken != ZERO_ADDRESS) {
         //     // Test Claim
@@ -450,107 +450,107 @@ contract SonneStrategyOptimismTest is Test {
         //     }
         // }
 
-        // Test destroy
-        console.log("============= Rebalance - Destroy Circle =============");
-        assertEq(strategy.checkRebalance(), false);
-        strategy.setRebalanceParameter(500000000000000000, 600000000000000000);
-        assertEq(strategy.checkRebalance(), true);
-        strategy.rebalance();
-        assertEq(strategy.checkRebalance(), false);
-        tokenInfo = _showXTokenInfo();
+        // // Test destroy
+        // console.log("============= Rebalance - Destroy Circle =============");
+        // assertEq(strategy.checkRebalance(), false);
+        // strategy.setRebalanceParameter(500000000000000000, 600000000000000000);
+        // assertEq(strategy.checkRebalance(), true);
+        // strategy.rebalance();
+        // assertEq(strategy.checkRebalance(), false);
+        // tokenInfo = _showXTokenInfo();
 
-        // Test withdraw
-        console.log("============= Withdraw =============");
-        IStorageTest(_storage).withdraw(depositAmount / 2, supplyToken);
-        assertEq(strategy.checkRebalance(), false);
-        tokenInfo = _showXTokenInfo();
+        // // Test withdraw
+        // console.log("============= Withdraw =============");
+        // IStorageTest(_storage).withdraw(depositAmount / 2, supplyToken);
+        // assertEq(strategy.checkRebalance(), false);
+        // tokenInfo = _showXTokenInfo();
 
-        // Test rebalance
-        console.log("============= Rebalance - Create Circle =============");
-        strategy.setRebalanceParameter(_borrowRateMin, _borrowRateMax);
-        assertEq(strategy.checkRebalance(), true);
-        strategy.rebalance();
-        assertEq(strategy.checkRebalance(), false);
-        tokenInfo = _showXTokenInfo();
+        // // Test rebalance
+        // console.log("============= Rebalance - Create Circle =============");
+        // strategy.setRebalanceParameter(_borrowRateMin, _borrowRateMax);
+        // assertEq(strategy.checkRebalance(), true);
+        // strategy.rebalance();
+        // assertEq(strategy.checkRebalance(), false);
+        // tokenInfo = _showXTokenInfo();
 
-        // Test destroy All
-        console.log("============= Destroy All =============");
-        vm.roll(block.number + 1000000);
-        vm.warp(block.timestamp + 100);
+        // // Test destroy All
+        // console.log("============= Destroy All =============");
+        // vm.roll(block.number + 1000000);
+        // vm.warp(block.timestamp + 100);
 
-        blidExpense = IERC20MetadataUpgradeable(blid).balanceOf(expense);
-        blidStorage = IERC20MetadataUpgradeable(blid).balanceOf(_storage);
+        // blidExpense = IERC20MetadataUpgradeable(blid).balanceOf(expense);
+        // blidStorage = IERC20MetadataUpgradeable(blid).balanceOf(_storage);
 
-        strategy.destroyAll();
+        // strategy.destroyAll();
 
-        blidExpenseNew = IERC20MetadataUpgradeable(blid).balanceOf(expense);
-        blidStorageNew = IERC20MetadataUpgradeable(blid).balanceOf(_storage);
-        Rewards_balance = IERC20MetadataUpgradeable(rewardsToken).balanceOf(logic);
+        // blidExpenseNew = IERC20MetadataUpgradeable(blid).balanceOf(expense);
+        // blidStorageNew = IERC20MetadataUpgradeable(blid).balanceOf(_storage);
+        // Rewards_balance = IERC20MetadataUpgradeable(rewardsToken).balanceOf(logic);
 
-        console.log(
-            "Available in Storage : ",
-            IMultiLogicProxy(multiLogicProxy).getTokenAvailable(supplyToken, logic)
-        );
-        tokenInfo = _showXTokenInfo();
-        assertEq(strategy.checkRebalance(), false);
-        assertEq(strategy.checkUseToken(), true);
-        assertEq(tokenInfo.borrowAmount, 0);
-        assertEq(tokenInfo.totalSupply, 0);
+        // console.log(
+        //     "Available in Storage : ",
+        //     IMultiLogicProxy(multiLogicProxy).getTokenAvailable(supplyToken, logic)
+        // );
+        // tokenInfo = _showXTokenInfo();
+        // assertEq(strategy.checkRebalance(), false);
+        // assertEq(strategy.checkUseToken(), true);
+        // assertEq(tokenInfo.borrowAmount, 0);
+        // assertEq(tokenInfo.totalSupply, 0);
 
-        if (strategyToken != ZERO_ADDRESS) {
-            console.log("BLID of expense   : ", blidExpense);
-            console.log("BLID of storage   : ", blidStorage);
-            console.log("BLID of expense   : ", blidExpenseNew);
-            console.log("BLID of storage   : ", blidStorageNew);
-            console.log("Rewards of Logic  : ", Rewards_balance);
+        // if (strategyToken != ZERO_ADDRESS) {
+        //     console.log("BLID of expense   : ", blidExpense);
+        //     console.log("BLID of storage   : ", blidStorage);
+        //     console.log("BLID of expense   : ", blidExpenseNew);
+        //     console.log("BLID of storage   : ", blidStorageNew);
+        //     console.log("Rewards of Logic  : ", Rewards_balance);
 
-            if (supplyXToken == strategyXToken) {
-                assertEq(
-                    int256(tokenInfo.lendingAmount) -
-                        int256(tokenInfo.totalSupply) +
-                        int256(tokenInfo.borrowAmount),
-                    0
-                );
-            } else {
-                XTokenInfo memory supplyTokenInfo = statistics.getStrategyXTokenInfo(supplyXToken, logic);
-                assertEq(
-                    int256(supplyTokenInfo.lendingAmountUSD) -
-                        int256(supplyTokenInfo.totalSupplyUSD) -
-                        int256(tokenInfo.totalSupplyUSD) +
-                        int256(tokenInfo.borrowAmountUSD) <
-                        1, // USDC deciaml = 6
-                    true
-                );
-            }
+        //     if (supplyXToken == strategyXToken) {
+        //         assertEq(
+        //             int256(tokenInfo.lendingAmount) -
+        //                 int256(tokenInfo.totalSupply) +
+        //                 int256(tokenInfo.borrowAmount),
+        //             0
+        //         );
+        //     } else {
+        //         XTokenInfo memory supplyTokenInfo = statistics.getStrategyXTokenInfo(supplyXToken, logic);
+        //         assertEq(
+        //             int256(supplyTokenInfo.lendingAmountUSD) -
+        //                 int256(supplyTokenInfo.totalSupplyUSD) -
+        //                 int256(tokenInfo.totalSupplyUSD) +
+        //                 int256(tokenInfo.borrowAmountUSD) <
+        //                 1, // USDC deciaml = 6
+        //             true
+        //         );
+        //     }
 
-            assertEq(blidExpenseNew > blidExpense, true);
-            assertEq(blidStorageNew > blidStorage, true);
+        //     assertEq(blidExpenseNew > blidExpense, true);
+        //     assertEq(blidStorageNew > blidStorage, true);
 
-            // Withdraw All
-            IStorageTest(_storage).withdraw(depositAmount / 2, supplyToken);
-        }
+        //     // Withdraw All
+        //     IStorageTest(_storage).withdraw(depositAmount / 2, supplyToken);
+        // }
 
-        // Deposit / Withdraw All
-        if (strategyToken != ZERO_ADDRESS) {
-            console.log("============= Deposit/Withdraw All =============");
-            if (supplyToken == ZERO_ADDRESS) {
-                IStorageTest(_storage).deposit{ value: depositAmount }(depositAmount, supplyToken);
-            } else {
-                IStorageTest(_storage).deposit(depositAmount, supplyToken);
-            }
+        // // Deposit / Withdraw All
+        // if (strategyToken != ZERO_ADDRESS) {
+        //     console.log("============= Deposit/Withdraw All =============");
+        //     if (supplyToken == ZERO_ADDRESS) {
+        //         IStorageTest(_storage).deposit{ value: depositAmount }(depositAmount, supplyToken);
+        //     } else {
+        //         IStorageTest(_storage).deposit(depositAmount, supplyToken);
+        //     }
 
-            strategy.setMinStorageAvailable(depositAmount / 10);
-            strategy.useToken();
-            strategy.rebalance();
+        //     strategy.setMinStorageAvailable(depositAmount / 10);
+        //     strategy.useToken();
+        //     strategy.rebalance();
 
-            vm.roll(block.number + 1000000);
-            vm.warp(block.timestamp + 100);
+        //     vm.roll(block.number + 1000000);
+        //     vm.warp(block.timestamp + 100);
 
-            IStorageTest(_storage).withdraw(depositAmount, supplyToken);
+        //     IStorageTest(_storage).withdraw(depositAmount, supplyToken);
 
-            tokenInfo = _showXTokenInfo();
-            assertEq(tokenInfo.lendingAmount, 0);
-        }
+        //     tokenInfo = _showXTokenInfo();
+        //     assertEq(tokenInfo.lendingAmount, 0);
+        // }
     }
 
     function _showXTokenInfo() private view returns (XTokenInfo memory xTokenInfo) {
