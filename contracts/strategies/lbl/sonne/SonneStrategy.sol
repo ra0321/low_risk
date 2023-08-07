@@ -47,4 +47,51 @@ contract SonneStrategy is LendBorrowLendStrategy {
             }
         }
     }
+
+    /**
+     * @notice Set StrategyXToken
+     * Add XToken for circle in Contract and approve token
+     * entermarkets to lending system
+     * @param _xToken Address of XToken
+     */
+    function setupStrategyXToken(address _xToken) external onlyOwner {
+        if (_xToken != ZERO_ADDRESS && strategyXToken != _xToken) {
+            strategyXToken = _xToken;
+            strategyToken = _registToken(_xToken, logic);
+
+            emit SetStrategyXToken(_xToken);
+        }
+    }
+
+    /**
+     * @notice Set SupplyXToken
+     * Add XToken for supply in Contract and approve token
+     * entermarkets to lending system
+     * @param _xToken Address of XToken
+     */
+    function setupSupplyXToken(address _xToken) external onlyOwner {
+        if (_xToken != ZERO_ADDRESS && supplyXToken != _xToken) {
+            supplyXToken = _xToken;
+            supplyToken = _registToken(_xToken, logic);
+
+            emit SetSupplyXToken(_xToken);
+        }
+    }
+
+    /**
+     * @notice Get underlying
+     * call Logic.addXTokens
+     * call Logic.enterMarkets
+     */
+    function _registToken(address xToken, address _logic) private returns (address underlying) {
+        underlying = _getUnderlying(xToken);
+
+        // Add token/iToken to Logic
+        ILendingLogic(_logic).addXTokens(underlying, xToken);
+
+        // Entermarkets with token/xToken
+        address[] memory tokens = new address[](1);
+        tokens[0] = xToken;
+        ILendingLogic(_logic).enterMarkets(tokens);
+    }
 }

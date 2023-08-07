@@ -46,7 +46,7 @@ interface IStorageTest {
 contract SonneStrategyOptimismTest is Test {
     uint256 private mainnetFork;
 
-    address owner = 0xa7e21fabEC16A185Acae3AB3d004DF84b23C3501;
+    address owner = 0x43ad0f0585659a68faA72FE276e48B9d2a23B117;
     SonneStatistics public statistics;
     SwapGateway public swapGateway;
 
@@ -224,8 +224,8 @@ contract SonneStrategyOptimismTest is Test {
         vm.startPrank(owner);
 
         // Configuration
-        strategy.setStrategyXToken(soUSDT);
-        strategy.setSupplyXToken(soUSDC);
+        strategy.setupStrategyXToken(soUSDT);
+        strategy.setupSupplyXToken(soUSDC);
 
         // swapInfo.swapRouters = new address[](2);
         // swapInfo.swapRouters[0] = DODOV2Proxy02;
