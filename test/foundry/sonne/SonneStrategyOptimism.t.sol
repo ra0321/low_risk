@@ -116,7 +116,7 @@ contract SonneStrategyOptimismTest is Test {
 
         // statistics.setBLID(blid);
 
-        // address[] memory path = new address[](2);
+        address[] memory path = new address[](2);
         // path[0] = blid;
         // path[1] = USDT;
         // statistics.setBLIDSwap(uniswapV3Router, path);
@@ -192,30 +192,30 @@ contract SonneStrategyOptimismTest is Test {
         // Deal and swap USDT
         vm.deal(owner, 10 ** 18);
 
-        // path = new address[](2);
-        // path[0] = ZERO_ADDRESS;
-        // path[1] = USDT;
+        path = new address[](2);
+        path[0] = ZERO_ADDRESS;
+        path[1] = USDT;
 
-        // swapGateway.swap{ value: 10 ** 18 }(uniswapV3Router, 10 ** 18, 0, path, true, block.timestamp + 3600);
+        swapGateway.swap{ value: 10 ** 18 }(uniswapV3Router, 10 ** 18, 0, path, true, block.timestamp + 3600);
 
-        // // Deal and swap USDC
-        // vm.deal(owner, 10 ** 18);
+        // Deal and swap USDC
+        vm.deal(owner, 10 ** 18);
 
-        // path = new address[](2);
-        // path[0] = ZERO_ADDRESS;
-        // path[1] = USDC;
+        path = new address[](2);
+        path[0] = ZERO_ADDRESS;
+        path[1] = USDC;
 
-        // swapGateway.swap{ value: 10 ** 18 }(uniswapV3Router, 10 ** 18, 0, path, true, block.timestamp + 3600);
+        swapGateway.swap{ value: 10 ** 18 }(uniswapV3Router, 10 ** 18, 0, path, true, block.timestamp + 3600);
 
-        // // Deal and swap DAI
-        // vm.deal(owner, 10 ** 18);
+        // Deal and swap DAI
+        vm.deal(owner, 10 ** 18);
 
-        // path = new address[](3);
-        // path[0] = ZERO_ADDRESS;
-        // path[1] = USDC;
-        // path[2] = DAI;
+        path = new address[](3);
+        path[0] = ZERO_ADDRESS;
+        path[1] = USDC;
+        path[2] = DAI;
 
-        // swapGateway.swap{ value: 10 ** 18 }(uniswapV3Router, 10 ** 18, 0, path, true, block.timestamp + 3600);
+        swapGateway.swap{ value: 10 ** 18 }(uniswapV3Router, 10 ** 18, 0, path, true, block.timestamp + 3600);
 
         vm.stopPrank();
     }
