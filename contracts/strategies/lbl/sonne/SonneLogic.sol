@@ -8,4 +8,8 @@ import "../../../Interfaces/ISonne.sol";
 
 contract SonneLogic is LendingLogic {
     /*** Override internal function ***/
+
+    function _checkMarkets(address xToken) internal view override returns (bool isListed) {
+        (isListed, , ) = IComptrollerSonne(comptroller).markets(xToken);
+    }
 }
