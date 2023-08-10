@@ -54,7 +54,7 @@ contract LodestarStrategyArbitrumTest is Test {
     LodestarStrategy strategy;
     SwapInfo swapInfo;
 
-    uint256 private constant BLOCK_NUMBER = 101_138_752;
+    uint256 private constant BLOCK_NUMBER = 120_100_000;
     address private constant ZERO_ADDRESS = address(0);
     address expense = 0x43ad0f0585659a68faA72FE276e48B9d2a23B117;
     address comptroller = 0xa86DD95c210dd186Fa7639F93E4177E97d057576;
